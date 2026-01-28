@@ -194,14 +194,12 @@ router.get('/user/:userId', async (req, res) => {
         const asLearner = await MentorshipRequest.find({ learnerId: userId })
             .populate('mentorId')
             .populate('skillId')
-            .populate('feedback')
             .sort({ createdAt: -1 });
 
         // Get requests where user is mentor
         const asMentor = await MentorshipRequest.find({ mentorId: userId })
             .populate('learnerId')
             .populate('skillId')
-            .populate('feedback')
             .sort({ createdAt: -1 });
 
         res.json({
@@ -385,6 +383,135 @@ router.post('/:id/quiz/submit', async (req, res) => {
     } catch (error) {
         console.error('Error submitting quiz:', error);
         res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// ========================================
+// MESSAGING & SCHEDULING ROUTES
+// ========================================
+
+const Message = require('../models/Message');
+
+// @route   POST /api/requests/:id/message
+// @desc    Send a message in a mentorship request thread
+// @access  Public (should be private in production)
+router.post('/:id/message', async (req, res) => {
+    try {
+        const { senderId, message } = req.body;
+        const requestId = req.params.id;
+
+        if (!senderId || !message) {
+            return res.status(400).json({
+                success: false,
+                message: 'SenderId and message are required'
+            });
+        }
+
+        // Verify request exists
+        const request = await MentorshipRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found'
+            });
+        }
+
+        // Verify sender is part of this request
+        if (senderId !== request.learnerId.toString() && senderId !== request.mentorId.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to message in this request'
+            });
+        }
+
+        // Create message
+        const newMessage = new Message({
+            requestId,
+            senderId,
+            message
+        });
+
+        await newMessage.save();
+        await newMessage.populate('senderId', 'name email');
+
+        res.status(201).json({
+            success: true,
+            message: 'Message sent',
+            data: newMessage
+        });
+    } catch (error) {
+        console.error('Error sending message:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   GET /api/requests/:id/messages
+// @desc    Get all messages for a mentorship request
+// @access  Public (should be private in production)
+router.get('/:id/messages', async (req, res) => {
+    try {
+        const messages = await Message.find({ requestId: req.params.id })
+            .populate('senderId', 'name email')
+            .sort({ createdAt: 1 });
+
+        res.json({
+            success: true,
+            count: messages.length,
+            data: messages
+        });
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   POST /api/requests/:id/schedule
+// @desc    Propose a meeting schedule
+// @access  Public (should be private in production)
+router.post('/:id/schedule', async (req, res) => {
+    try {
+        const { date, time, note } = req.body;
+        const requestId = req.params.id;
+
+        if (!date || !time) {
+            return res.status(400).json({
+                success: false,
+                message: 'Date and time are required'
+            });
+        }
+
+        // Find request and update schedule
+        const request = await MentorshipRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found'
+            });
+        }
+
+        // Store schedule as plain fields (simple MVP)
+        request.suggestedDate = date;
+        request.suggestedTime = time;
+        request.sessionNotes = note || request.sessionNotes; // Use sessionNotes for meeting details
+        await request.save();
+
+        res.json({
+            success: true,
+            message: 'Schedule proposed successfully',
+            data: request
+        });
+    } catch (error) {
+        console.error('Error scheduling:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
     }
 });
 

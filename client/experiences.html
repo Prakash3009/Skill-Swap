@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Share and discover real-world experiences">
+    <title>Experiences - SkillSwap</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="img/logo.png" alt="SkillSwap" class="brand-logo">
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="search.html" class="nav-link">Find Mentors</a></li>
+                <li><a href="community.html" class="nav-link">Communities</a></li>
+                <li><a href="experiences.html" class="nav-link active">Experiences</a></li>
+                <li><a href="redeem.html" class="nav-link">Redeem</a></li>
+                <li><a href="profile.html" class="nav-link">My Profile</a></li>
+                <li><a href="requests.html" class="nav-link">My Requests</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container" style="padding: 2rem 0;">
+        <div class="d-flex justify-between align-center mb-3">
+            <h1>💡 Real-World Experiences</h1>
+            <button onclick="logout()" class="btn btn-secondary btn-sm">🚪 Logout</button>
+        </div>
+
+        <!-- Share Experience Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="card-title">Share Your Experience</h2>
+                <p class="text-muted">Help others by sharing your real-world experiences</p>
+            </div>
+            <div class="card-body">
+                <form id="share-experience-form">
+                    <div class="form-group">
+                        <label for="exp-title" class="form-label">Title</label>
+                        <input type="text" id="exp-title" class="form-control"
+                            placeholder="e.g., My Summer Internship at Google" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exp-type" class="form-label">Type</label>
+                        <select id="exp-type" class="form-control" required>
+                            <option value="">Select type...</option>
+                            <option value="Internship">Internship</option>
+                            <option value="Hackathon">Hackathon</option>
+                            <option value="Job Interview">Job Interview</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exp-description" class="form-label">Description</label>
+                        <textarea id="exp-description" class="form-control" rows="4"
+                            placeholder="Share your experience in detail..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exp-guidelines" class="form-label">Tips & Guidelines (Optional)</label>
+                        <textarea id="exp-guidelines" class="form-control" rows="3"
+                            placeholder="Do's and don'ts, tips for others..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Share Experience</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex gap-2 align-center">
+                    <label class="form-label" style="margin: 0;">Filter by type:</label>
+                    <select id="filter-type" class="form-control" style="max-width: 200px;">
+                        <option value="">All</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Hackathon">Hackathon</option>
+                        <option value="Job Interview">Job Interview</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Experiences List -->
+        <div id="experiences-container">
+            <div class="loading-container">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>© 2026 SkillSwap Hackathon Project.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script>
+        const API_URL = '/api';
+        let currentUserId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentUserId = localStorage.getItem('userId');
+            if (!currentUserId) {
+                showAlert('Please login first', 'warning');
+                setTimeout(() => window.location.href = 'index.html', 2000);
+                return;
+            }
+
+            loadExperiences();
+
+            // Filter change handler
+            document.getElementById('filter-type').addEventListener('change', loadExperiences);
+        });
+
+        // Share experience form
+        document.getElementById('share-experience-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                title: document.getElementById('exp-title').value,
+                type: document.getElementById('exp-type').value,
+                description: document.getElementById('exp-description').value,
+                guidelines: document.getElementById('exp-guidelines').value
+            };
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/experiences`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Experience shared successfully!', 'success');
+                    e.target.reset();
+                    loadExperiences();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error sharing experience:', error);
+                showAlert('Failed to share experience', 'danger');
+            }
+        });
+
+        // Load experiences
+        async function loadExperiences() {
+            const container = document.getElementById('experiences-container');
+            const filterType = document.getElementById('filter-type').value;
+
+            try {
+                const url = filterType
+                    ? `${API_URL}/experiences?type=${encodeURIComponent(filterType)}`
+                    : `${API_URL}/experiences`;
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayExperiences(result.data);
+                } else {
+                    container.innerHTML = '<p class="text-danger">Failed to load experiences</p>';
+                }
+            } catch (error) {
+                console.error('Error loading experiences:', error);
+                container.innerHTML = '<p class="text-danger">Failed to load experiences</p>';
+            }
+        }
+
+        // Display experiences
+        function displayExperiences(experiences) {
+            const container = document.getElementById('experiences-container');
+
+            if (experiences.length === 0) {
+                container.innerHTML = '<p class="text-muted">No experiences shared yet. Be the first!</p>';
+                return;
+            }
+
+            container.innerHTML = experiences.map(exp => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <h3 style="margin: 0;">${exp.title}</h3>
+                            <span class="badge badge-primary">${exp.type}</span>
+                        </div>
+                        <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">
+                            By ${exp.createdBy.name} • ${timeAgo(exp.createdAt)}
+                        </p>
+                        <p style="line-height: 1.6; margin-bottom: 1rem;">${exp.description}</p>
+                        ${exp.guidelines ? `
+                            <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                                <strong>💡 Tips & Guidelines:</strong>
+                                <p style="margin: 0.5rem 0 0 0; line-height: 1.6;">${exp.guidelines}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+
+</html>

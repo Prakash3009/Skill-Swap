@@ -30,6 +30,7 @@ app.use('/api/requests', require('./routes/requestRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/communities', require('./routes/communityRoutes'));
 app.use('/api/redeem', require('./routes/redeemRoutes'));
+app.use('/api/experiences', require('./routes/experienceRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
