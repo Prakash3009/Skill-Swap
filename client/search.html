@@ -215,14 +215,22 @@
                 <p><strong>Skill:</strong> ${skillName}</p>
             `;
             document.getElementById('request-modal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
         }
 
         function closeModal() {
             document.getElementById('request-modal').style.display = 'none';
+            document.body.style.overflow = ''; // Restore background scrolling
         }
 
         document.getElementById('request-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
             let message = document.getElementById('request-message').value;
             const goals = document.getElementById('request-goals').value;
 
@@ -247,11 +255,15 @@
                 if (result.success) {
                     showAlert('Request sent successfully!', 'success');
                     closeModal();
+                    e.target.reset(); // Reset form
                 } else {
                     showAlert(result.message, 'danger');
                 }
             } catch (err) {
                 showAlert('Failed to send request', 'danger');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     </script>
