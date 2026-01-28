@@ -369,7 +369,7 @@
                 // Accept request
                 async function acceptRequest(requestId) {
                     try {
-                        const response = await fetch(`${API_URL} /requests/${requestId}/accept`, {
+                        const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
                             method: 'PUT'
                         });
 
