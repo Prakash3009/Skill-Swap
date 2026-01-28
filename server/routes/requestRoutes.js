@@ -13,7 +13,7 @@ const Transaction = require('../models/Transaction');
  */
 
 // @route   POST /api/requests
-// @desc    Send a mentorship request (costs 1 coin)
+// @desc    Send a mentorship request (costs 2 coins)
 // @access  Public
 router.post('/', async (req, res) => {
     try {
@@ -36,10 +36,10 @@ router.post('/', async (req, res) => {
             });
         }
 
-        if (learner.coins < 1) {
+        if (learner.coins < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Insufficient coins. You need at least 1 coin to send a request.'
+                message: 'Insufficient coins. You need at least 2 coins to send a request.'
             });
         }
 
@@ -61,15 +61,15 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Deduct 1 coin from learner
-        learner.coins -= 1;
+        // Deduct 2 coins from learner
+        learner.coins -= 2;
         await learner.save();
 
         // Log spend transaction
         const transaction = new Transaction({
             userId: learnerId,
             type: 'spend',
-            amount: 1,
+            amount: 2,
             description: `Sent Mentorship Request to ${mentor.name}`
         });
         await transaction.save();
@@ -87,7 +87,7 @@ router.post('/', async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'Mentorship request sent successfully. 1 coin deducted.',
+            message: 'Mentorship request sent successfully. 2 coins deducted.',
             data: request,
             remainingCoins: learner.coins
         });
@@ -361,6 +361,24 @@ router.post('/:id/quiz/submit', async (req, res) => {
                 });
                 await transaction.save();
             }
+
+            // Award 1 coin to learner (New Logic)
+            const learner = await User.findById(request.learnerId);
+            if (learner) {
+                learner.coins += 1;
+                await learner.save();
+
+                const transaction = new Transaction({
+                    userId: learner._id,
+                    type: 'earn',
+                    amount: 1,
+                    description: `Course Completion Reward (Quiz Passed)`
+                });
+                await transaction.save();
+
+                message += ' You earned 1 🪙 coin!';
+            }
+
         } else {
             message += 'Please review the material and try again.';
             // Do not complete request, let them retry
