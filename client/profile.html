@@ -142,6 +142,52 @@
                 </div>
             </div>
 
+            <!-- Professional Presence & Achievements -->
+            <div class="grid grid-2 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🌐 Professional Presence</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="update-social-form">
+                            <div class="form-group">
+                                <label class="form-label">LinkedIn URL</label>
+                                <input type="url" id="social-linkedin" class="form-control"
+                                    placeholder="https://linkedin.com/in/...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">GitHub URL</label>
+                                <input type="url" id="social-github" class="form-control"
+                                    placeholder="https://github.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Portfolio URL</label>
+                                <input type="url" id="social-portfolio" class="form-control" placeholder="https://...">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Social Links</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🏆 My Achievements</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="add-achievement-form" class="mb-3">
+                            <div class="d-flex gap-2">
+                                <input type="text" id="achievement-title" class="form-control"
+                                    placeholder="e.g. Hackathon Winner" required>
+                                <button type="submit" class="btn btn-primary">Add</button>
+                            </div>
+                        </form>
+                        <div id="achievements-list" class="d-flex flex-column gap-2">
+                            <p class="text-muted">No achievements added yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Led Communities Section -->
             <div class="card mb-3 mt-4">
                 <div class="card-header">
@@ -187,6 +233,7 @@
     <script>
         const API_URL = '/api';
         let currentUserId = null;
+        let userAchievements = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             currentUserId = localStorage.getItem('userId');
@@ -215,6 +262,18 @@
 
                     displaySkills(user.skillsOffered, 'offered-skills-list', 'badge-warning');
                     displaySkills(user.skillsWanted, 'wanted-skills-list', 'badge-secondary');
+
+                    // Populate Social Links
+                    if (user.socialLinks) {
+                        document.getElementById('social-linkedin').value = user.socialLinks.linkedin || '';
+                        document.getElementById('social-github').value = user.socialLinks.github || '';
+                        document.getElementById('social-portfolio').value = user.socialLinks.portfolio || '';
+                    }
+
+                    // Handle Achievements
+                    userAchievements = user.achievements || [];
+                    renderAchievements();
+
                     loadLedCommunities();
                 }
             } catch (error) {
@@ -338,6 +397,84 @@
                 showAlert('Failed to add skill', 'danger');
             }
         });
+
+        // Social Links Update
+        document.getElementById('update-social-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const socialLinks = {
+                linkedin: document.getElementById('social-linkedin').value,
+                github: document.getElementById('social-github').value,
+                portfolio: document.getElementById('social-portfolio').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/users/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ socialLinks })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    showAlert('Social links updated!', 'success');
+                }
+            } catch (err) {
+                showAlert('Failed to update social links', 'danger');
+            }
+        });
+
+        // Achievements Logic
+        function renderAchievements() {
+            const list = document.getElementById('achievements-list');
+            if (userAchievements.length === 0) {
+                list.innerHTML = '<p class="text-muted">No achievements added yet.</p>';
+                return;
+            }
+            list.innerHTML = userAchievements.map((a, index) => `
+                <div class="d-flex justify-between align-center p-2" style="background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+                    <span style="font-weight: 600;">🏆 ${a.title}</span>
+                    <button class="btn btn-sm text-danger" onclick="removeAchievement(${index})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('add-achievement-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('achievement-title').value;
+            userAchievements.push({ title });
+
+            if (await updateProfileData({ achievements: userAchievements })) {
+                document.getElementById('achievement-title').value = '';
+                renderAchievements();
+            }
+        });
+
+        async function removeAchievement(index) {
+            userAchievements.splice(index, 1);
+            if (await updateProfileData({ achievements: userAchievements })) {
+                renderAchievements();
+            }
+        }
+
+        async function updateProfileData(data) {
+            try {
+                const res = await fetch(`${API_URL}/users/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                return result.success;
+            } catch (err) {
+                showAlert('Failed to update profile', 'danger');
+                return false;
+            }
+        }
     </script>
 
     <footer class="site-footer">

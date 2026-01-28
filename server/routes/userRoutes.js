@@ -90,6 +90,43 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+const { authMiddleware } = require('../middleware/auth');
+
+// @route   PUT /api/users/profile
+// @desc    Update user profile (bio, social links, achievements)
+// @access  Private
+router.put('/profile', authMiddleware, async (req, res) => {
+    try {
+        const { bio, socialLinks, achievements } = req.body;
+
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (bio !== undefined) user.bio = bio;
+        if (socialLinks) {
+            if (socialLinks.linkedin !== undefined) user.socialLinks.linkedin = socialLinks.linkedin;
+            if (socialLinks.github !== undefined) user.socialLinks.github = socialLinks.github;
+            if (socialLinks.portfolio !== undefined) user.socialLinks.portfolio = socialLinks.portfolio;
+        }
+        if (achievements) user.achievements = achievements;
+
+        await user.save();
+
+        const populatedUser = await User.findById(user._id)
+            .populate('skillsOffered')
+            .populate('skillsWanted');
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: populatedUser
+        });
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 // @route   GET /api/users
 // @desc    Get all users
 // @access  Public

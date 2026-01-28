@@ -137,13 +137,21 @@
                                 (${(user.averageRating || 0).toFixed(1)} Avg Rating)
                             </span>
                         </div>
-                        <p style="font-size: 1.2rem; line-height: 1.6; color: var(--text-body); max-width: 800px;">
+                        <p style="font-size: 1.2rem; line-height: 1.6; color: var(--text-body); max-width: 800px; margin-bottom: 1.5rem;">
                             ${user.bio || 'This expert hasn\'t provided a bio yet, but they are ready to help you master new skills!'}
                         </p>
+                        
+                        ${user.socialLinks ? `
+                        <div class="d-flex gap-3">
+                            ${user.socialLinks.linkedin ? `<a href="${user.socialLinks.linkedin}" target="_blank" class="social-icon" title="LinkedIn">in</a>` : ''}
+                            ${user.socialLinks.github ? `<a href="${user.socialLinks.github}" target="_blank" class="social-icon" title="GitHub">gh</a>` : ''}
+                            ${user.socialLinks.portfolio ? `<a href="${user.socialLinks.portfolio}" target="_blank" class="social-icon" title="Portfolio">🌐</a>` : ''}
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
 
-                <div class="grid grid-2">
+                <div class="grid grid-3">
                     <div class="card">
                         <h3 class="mb-4">💡 Skills Offered</h3>
                         <div class="d-flex flex-wrap gap-2" id="skills-offered">
@@ -154,11 +162,24 @@
                     </div>
 
                     <div class="card">
-                        <h3 class="mb-4">🎯 Skills Interested In</h3>
+                        <h3 class="mb-4">🎯 Interested In</h3>
                         <div class="d-flex flex-wrap gap-2" id="skills-wanted">
                             ${(user.skillsWanted || []).length > 0
                     ? user.skillsWanted.map(s => `<span class="skill-tag" style="background: var(--bg-tertiary);">${s.skillName}</span>`).join('')
                     : '<p class="text-muted">No interests listed yet.</p>'}
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="mb-4">🏆 Achievements</h3>
+                        <div id="achievements-display" class="d-flex flex-column gap-2">
+                            ${(user.achievements || []).length > 0
+                    ? user.achievements.map(a => `
+                                    <div class="p-2" style="background: var(--bg-tertiary); border-radius: var(--radius-sm); border-left: 3px solid var(--warning);">
+                                        <span style="font-weight: 600;">${a.title}</span>
+                                    </div>
+                                `).join('')
+                    : '<p class="text-muted">No achievements listed yet.</p>'}
                         </div>
                     </div>
                 </div>

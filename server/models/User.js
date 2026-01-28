@@ -30,6 +30,15 @@ const userSchema = new mongoose.Schema({
         default: '',
         maxlength: 500
     },
+    socialLinks: {
+        linkedin: { type: String, default: '' },
+        github: { type: String, default: '' },
+        portfolio: { type: String, default: '' }
+    },
+    achievements: [{
+        title: { type: String, required: true },
+        date: { type: Date, default: Date.now }
+    }],
     coins: {
         type: Number,
         default: 10, // Every new user starts with 10 coins
