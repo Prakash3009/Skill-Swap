@@ -219,24 +219,24 @@
               <h3 style="margin: 0;">${req.learnerId.name}</h3>
               <p class="text-muted" style="margin: 0;">${req.learnerId.email}</p>
             </div>
-            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase()}</span>
+            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase().replace('_', ' ')}</span>
           </div>
 
           <!-- Status Timeline -->
           <div class="status-timeline mb-3">
-            <div class="step ${req.status === 'pending' || req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
-                <div class="dot"></div>
-                <div class="label">Pending</div>
-            </div>
-            <div class="line"></div>
-            <div class="step ${req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
+            <div class="step ${req.status !== 'pending' ? 'active' : ''}">
                 <div class="dot"></div>
                 <div class="label">Accepted</div>
             </div>
             <div class="line"></div>
-            <div class="step ${req.status === 'completed' ? 'active' : ''}">
+            <div class="step ${req.status === 'completed' || req.status === 'feedback_submitted' ? 'active' : ''}">
                 <div class="dot"></div>
                 <div class="label">Completed</div>
+            </div>
+            <div class="line"></div>
+            <div class="step ${req.status === 'feedback_submitted' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Reviewed</div>
             </div>
           </div>
           
@@ -244,11 +244,10 @@
             <p style="margin: 0;"><strong>Skill:</strong> ${req.skillId.skillName}</p>
             ${req.suggestedDate ? `<p style="margin: 0.5rem 0 0 0;"><strong>📅 Scheduled for:</strong> ${formatDate(req.suggestedDate)} at ${req.suggestedTime || 'Anytime'}</p>` : ''}
             ${req.message ? `<p style="margin: 0.5rem 0 0 0;"><strong>💬 Message:</strong> ${req.message}</p>` : ''}
-            ${req.quizScore !== null && req.quizScore !== undefined ? `<p style="margin: 0.5rem 0 0 0; color: var(--success); font-weight: bold;">✅ Quiz Passed: ${req.quizScore}/${req.quiz?.questions?.length || 3}</p>` : ''}
           </div>
 
           <!-- Session Notes Section -->
-          ${req.status === 'accepted' || req.status === 'completed' ? `
+          ${req.status !== 'pending' ? `
             <div class="session-notes mt-3">
                 <label class="form-label">Session Notes & Resources</label>
                 ${req.status === 'accepted' ? `
@@ -267,16 +266,16 @@
                             ? `<button class="btn btn-primary btn-sm" onclick="acceptRequest('${req._id}')">Accept Request</button>`
                             : ''
                         }
-            ${req.status === 'accepted' && (!req.quiz || !req.quiz.isEnabled)
-                            ? `<button class="btn btn-secondary btn-sm" onclick="openCreateQuizModal('${req._id}')">📝 Create Quiz</button>`
+            ${req.status === 'accepted'
+                            ? `<button class="btn btn-success btn-sm" onclick="completeRequest('${req._id}')">Mark as Completed (Wait for Feedback)</button>`
                             : ''
                         }
-            ${req.status === 'accepted' && req.quiz && req.quiz.isEnabled
-                            ? `<span class="badge badge-primary">Quiz Assigned</span>`
+            ${req.status === 'completed'
+                            ? `<span class="text-muted" style="font-size: 0.9rem;">Waiting for learner feedback to receive coins...</span>`
                             : ''
                         }
-            ${req.status === 'accepted' && false // Manual complete disabled in favor of quiz
-                            ? `<button class="btn btn-success btn-sm" onclick="completeRequest('${req._id}')">Mark as Completed (+3 🪙)</button>`
+             ${req.status === 'feedback_submitted'
+                            ? `<span class="text-success"><strong>✓ Feedback Received (+5 🪙)</strong></span>`
                             : ''
                         }
           </div>
@@ -294,30 +293,30 @@
                     }
 
                     container.innerHTML = requests.map(req => `
-                        <div class="card mb-3" style="padding: 1.5rem;">
+        <div class="card mb-3" style="padding: 1.5rem;">
           <div class="d-flex justify-between align-center mb-3">
             <div>
               <h3 style="margin: 0;">${req.mentorId.name}</h3>
               <p class="text-muted" style="margin: 0;">${req.mentorId.email}</p>
             </div>
-            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase()}</span>
+            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase().replace('_', ' ')}</span>
           </div>
 
-          <!--Status Timeline-- >
+          <!-- Status Timeline -->
           <div class="status-timeline mb-3">
-            <div class="step ${req.status === 'pending' || req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
-                <div class="dot"></div>
-                <div class="label">Pending</div>
-            </div>
-            <div class="line"></div>
-            <div class="step ${req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
+            <div class="step ${req.status !== 'pending' ? 'active' : ''}">
                 <div class="dot"></div>
                 <div class="label">Accepted</div>
             </div>
             <div class="line"></div>
-            <div class="step ${req.status === 'completed' ? 'active' : ''}">
+            <div class="step ${req.status === 'completed' || req.status === 'feedback_submitted' ? 'active' : ''}">
                 <div class="dot"></div>
                 <div class="label">Completed</div>
+            </div>
+            <div class="line"></div>
+            <div class="step ${req.status === 'feedback_submitted' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Reviewed</div>
             </div>
           </div>
           
@@ -325,11 +324,10 @@
             <p style="margin: 0;"><strong>Skill:</strong> ${req.skillId.skillName}</p>
             ${req.suggestedDate ? `<p style="margin: 0.5rem 0 0 0;"><strong>📅 Your Proposal:</strong> ${formatDate(req.suggestedDate)} at ${req.suggestedTime || 'Anytime'}</p>` : ''}
             ${req.message ? `<p style="margin: 0.5rem 0 0 0;"><strong>Your Message:</strong> ${req.message}</p>` : ''}
-            ${req.quizScore !== null && req.quizScore !== undefined ? `<p style="margin: 0.5rem 0 0 0; color: var(--success); font-weight: bold;">✅ Quiz Passed: ${req.quizScore}/${req.quiz?.questions?.length || 3}</p>` : ''}
           </div>
 
-          <!--Session Notes Section-- >
-                    ${(req.status === 'accepted' || req.status === 'completed') && req.sessionNotes ? `
+          <!-- Session Notes Section -->
+          ${(req.status !== 'pending') && req.sessionNotes ? `
             <div class="session-notes mt-3">
                 <label class="form-label">Mentor's Session Notes</label>
                 <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; font-size: 0.9rem;">
@@ -338,22 +336,22 @@
             </div>
           ` : ''}
 
-                <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
-                    ${req.status === 'accepted' && req.quiz && req.quiz.isEnabled && req.quizScore === null
-                            ? `<button class="btn btn-primary w-100" onclick='openTakeQuizModal("${req._id}", ${JSON.stringify(req.quiz)})'>📝 Take Final Quiz</button>`
+          <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+            ${req.status === 'completed'
+                            ? `<button class="btn btn-primary btn-sm w-100" onclick="openFeedbackModal('${req._id}', '${req.mentorId._id}')">⭐ Give Feedback (Required)</button>`
                             : ''
                         }
-                    ${req.status === 'accepted' && (!req.quiz || !req.quiz.isEnabled)
-                            ? `<p class="text-muted text-center" style="font-size: 0.9rem;">Wait for mentor to assign the completion quiz.</p>`
+            ${req.status === 'accepted'
+                            ? `<p class="text-muted text-center" style="font-size: 0.9rem;">Mentorship in progress... Wait for mentor to mark complete.</p>`
                             : ''
                         }
-                    ${req.status === 'completed'
-                            ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${req._id}', '${req.mentorId._id}')">⭐ Rate Mentorship</button>`
+            ${req.status === 'feedback_submitted'
+                            ? `<div class="text-center text-success"><strong>✓ Mentorship Finalized</strong></div>`
                             : ''
                         }
-                </div>
-        </div >
-                    `).join('');
+          </div>
+        </div>
+      `).join('');
                 }
 
                 // Get status badge class
@@ -452,11 +450,14 @@
                 function openFeedbackModal(requestId, mentorId) {
                     currentRequestId = requestId;
                     currentMentorId = mentorId;
-                    document.getElementById('feedback-modal').style.display = 'block';
-
-                    // Reset stars
-                    document.querySelectorAll('.star').forEach(s => s.style.opacity = '1');
-                    document.getElementById('rating-value').value = '';
+                    const modal = document.getElementById('feedback-modal');
+                    if (modal) {
+                        modal.style.display = 'block';
+                        // Reset stars
+                        document.querySelectorAll('.star').forEach(s => s.style.opacity = '1');
+                        document.getElementById('rating-value').value = '';
+                        document.getElementById('feedback-comment').value = '';
+                    }
                 }
 
                 // Close feedback modal

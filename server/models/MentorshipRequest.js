@@ -27,7 +27,7 @@ const mentorshipRequestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'accepted', 'completed'],
+        enum: ['pending', 'accepted', 'completed', 'feedback_submitted'],
         default: 'pending'
     },
     message: {

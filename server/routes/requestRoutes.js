@@ -143,7 +143,7 @@ router.put('/:id/accept', async (req, res) => {
 });
 
 // @route   PUT /api/requests/:id/complete
-// @desc    Mark mentorship as completed (mentor gets +5 coins)
+// @desc    Mark mentorship as completed (Waiting for feedback)
 // @access  Public
 router.put('/:id/complete', async (req, res) => {
     try {
@@ -168,25 +168,10 @@ router.put('/:id/complete', async (req, res) => {
         request.completedAt = new Date();
         await request.save();
 
-        // Award 3 coins to mentor
-        const mentor = await User.findById(request.mentorId).populate('skillId');
-        mentor.coins += 3;
-        await mentor.save();
-
-        // Log earn transaction
-        const transaction = new Transaction({
-            userId: mentor._id,
-            type: 'earn',
-            amount: 3,
-            description: `Session Expert Reward (Completed mentorship)`
-        });
-        await transaction.save();
-
         res.json({
             success: true,
-            message: 'Mentorship completed successfully. Mentor earned 3 coins!',
-            data: request,
-            mentorCoins: mentor.coins
+            message: 'Mentorship marked as completed. Waiting for learner feedback to release coins.',
+            data: request
         });
     } catch (error) {
         console.error('Error completing request:', error);

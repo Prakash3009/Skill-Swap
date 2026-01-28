@@ -68,18 +68,35 @@ router.post('/', async (req, res) => {
 
         await feedback.save();
 
+        // Update request status to feedback_submitted
+        request.status = 'feedback_submitted';
+        await request.save();
+
         // Update mentor's average rating
         const mentor = await User.findById(mentorId);
         if (mentor) {
             const currentTotalScore = mentor.averageRating * mentor.totalRatingsCount;
             mentor.totalRatingsCount += 1;
             mentor.averageRating = (currentTotalScore + rating) / mentor.totalRatingsCount;
+
+            // Award 5 coins to mentor upon feedback
+            mentor.coins += 5;
             await mentor.save();
+
+            // Log earn transaction
+            const Transaction = require('../models/Transaction');
+            const transaction = new Transaction({
+                userId: mentorId,
+                type: 'earn',
+                amount: 5,
+                description: `Mentorship Completed & Rated (${rating} Stars)`
+            });
+            await transaction.save();
         }
 
         res.status(201).json({
             success: true,
-            message: 'Feedback submitted successfully',
+            message: 'Feedback submitted! Mentor has been rewarded with 5 coins.',
             data: feedback
         });
     } catch (error) {
