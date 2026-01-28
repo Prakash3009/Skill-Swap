@@ -1,0 +1,25 @@
+{
+    "name": "skillswap",
+    "version": "1.0.0",
+    "description": "Peer-to-peer skill exchange platform for students and enthusiasts",
+    "main": "server/index.js",
+    "scripts": {
+        "start": "node server/index.js",
+        "dev": "nodemon server/index.js"
+    },
+    "keywords": [
+        "skill-exchange",
+        "mentorship",
+        "learning"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "mongoose": "^7.0.0",
+        "cors": "^2.8.5",
+        "body-parser": "^1.20.2",
+        "bcryptjs": "^2.4.3",
+        "jsonwebtoken": "^9.0.0"
+    }
+}

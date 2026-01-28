@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Register for SkillSwap">
+    <title>Register - SkillSwap</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">✨ SkillSwap</a>
+            <ul class="navbar-nav">
+                <li><a href="login.html" class="nav-link">Login</a></li>
+                <li><a href="register.html" class="nav-link active">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div style="max-width: 500px; margin: 3rem auto;">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title text-center">📝 Create Account</h1>
+                    <p class="text-muted text-center">Join SkillSwap and start learning!</p>
+                </div>
+                <div class="card-body">
+                    <form id="register-form" autocomplete="off">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" id="name" name="name" class="form-control"
+                                placeholder="Enter your full name" autocomplete="off" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" class="form-control"
+                                placeholder="Enter your email" autocomplete="off" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" id="password" name="password" class="form-control"
+                                placeholder="At least 6 characters" autocomplete="new-password" required minlength="6">
+                            <small class="text-muted">Password must be at least 6 characters long</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bio" class="form-label">Bio (Optional)</label>
+                            <textarea id="bio" name="bio" class="form-control" placeholder="Tell us about yourself..."
+                                autocomplete="off" maxlength="500"></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>🪙 Welcome Bonus:</strong> You'll start with 10 free coins!
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Create Account
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p class="text-muted">
+                            Already have an account?
+                            <a href="login.html" style="color: var(--primary-light); font-weight: 600;">Login here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        // Check if already logged in
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Redirect to profile if already logged in
+                window.location.href = 'profile.html';
+            }
+        });
+
+        // Register form submission
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const bio = document.getElementById('bio').value;
+
+            // Disable submit button
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+
+            try {
+                // Call register API
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password, bio })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Save token and user info to localStorage
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('userId', result.data.userId);
+                    localStorage.setItem('userName', result.data.name);
+                    localStorage.setItem('userEmail', result.data.email);
+
+                    // Show success message
+                    showAlert('Account created successfully! Redirecting...', 'success');
+
+                    // Redirect to profile page
+                    setTimeout(() => {
+                        window.location.href = 'profile.html';
+                    }, 1000);
+                } else {
+                    // Show error message
+                    showAlert(result.message, 'danger');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Account';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showAlert('Failed to create account. Please try again.', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="SkillSwap - The modern platform for peer-to-peer skill exchange. Connect, learn, and grow.">
+  <title>SkillSwap | Learn & Share Skills</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="navbar-brand">
+        <span
+          style="display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; background: var(--primary); color: white; border-radius: 0.5rem; font-size: 1.25rem;">✨</span>
+        SkillSwap
+      </a>
+      <ul class="navbar-nav">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+        <li><a href="search.html" class="nav-link">Find Mentors</a></li>
+        <li><a href="community.html" class="nav-link">Communities</a></li>
+        <li><a href="redeem.html" class="nav-link">Redeem</a></li>
+        <li><a href="profile.html" class="nav-link">My Profile</a></li>
+        <li><a href="requests.html" class="nav-link">My Requests</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero Section -->
+    <header class="hero">
+      <div class="container text-center">
+        <h1>Master New Skills Through <span style="color: var(--primary);">Peer Connections</span></h1>
+        <p>The most trustworthy community for sharing expertise. Teach what you know, learn what you need, and earn
+          rewards for your contributions.</p>
+        <div class="hero-actions">
+          <a href="profile.html" class="btn btn-primary btn-lg">Get Started Free</a>
+          <a href="search.html" class="btn btn-secondary btn-lg">Explore Mentors</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="features">
+      <div class="container">
+        <h2 class="section-title">Designed for Better Learning</h2>
+        <p class="section-subtitle">SkillSwap provides the tools you need to connect with experts and build your
+          knowledge base efficiently.</p>
+
+        <div class="grid grid-3">
+          <div class="card feature-card">
+            <div class="card-icon">👤</div>
+            <h3>Build Your Profile</h3>
+            <p>Showcase your expertise and what you're looking to master. Start your journey with 10 complimentary
+              learning coins.</p>
+          </div>
+
+          <div class="card feature-card">
+            <div class="card-icon">🔍</div>
+            <h3>Smart Mentor Search</h3>
+            <p>Find the perfect mentor with our advanced filtering by skill and category. Each mentorship request is
+              just 1 coin away.</p>
+          </div>
+
+          <div class="card feature-card">
+            <div class="card-icon">🎓</div>
+            <h3>Learn & Earn</h3>
+            <p>Complete sessions to gain valuable knowledge. Mentors earn 5 coins for every successful mentorship
+              completed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Account Setup Section -->
+    <section style="padding: 6rem 0;">
+      <div class="container">
+        <div class="grid grid-2" style="align-items: center;">
+          <div id="user-setup-context">
+            <h2>Join the Community Today</h2>
+            <p style="font-size: 1.125rem; margin: 1rem 0 2rem; color: var(--text-body);">Trusted by thousands of
+              students and professionals. Create your account in seconds and start learning.</p>
+          </div>
+
+          <div class="card" style="box-shadow: var(--shadow-xl);">
+            <div id="user-setup">
+              <h3>Create Your Account</h3>
+              <form id="create-user-form" style="margin-top: 1.5rem;">
+                <div class="form-group">
+                  <label for="name" class="form-label">Full Name</label>
+                  <input type="text" id="name" class="form-control" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="email" class="form-label">Work Email</label>
+                  <input type="email" id="email" class="form-control" placeholder="john@example.com" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="bio" class="form-label">Short Bio</label>
+                  <textarea id="bio" class="form-control" rows="3"
+                    placeholder="I am a software enthusiast interested in..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Setup Account</button>
+              </form>
+            </div>
+
+            <div id="user-info" style="display: none;">
+              <div
+                style="background: var(--primary-light); color: var(--primary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; font-weight: 600;">
+                ✓ Account successfully configured!
+              </div>
+              <div class="d-flex justify-between align-center">
+                <div>
+                  <h3 id="user-name" style="margin: 0;"></h3>
+                  <p id="user-email" class="text-muted" style="margin: 0;"></p>
+                </div>
+                <div class="coin-badge">
+                  <span id="user-coins">10</span> Coins
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Leaderboard Section -->
+    <section class="leaderboard-section" style="background-color: var(--bg-subtle);">
+      <div class="container">
+        <h2 class="section-title">Peer Learning Champions</h2>
+        <p class="section-subtitle">Recognizing our most dedicated mentors who are helping the community grow every day.
+        </p>
+
+        <div class="leaderboard-table-container">
+          <div id="leaderboard-container">
+            <div style="padding: 4rem; text-align: center;"><span class="spinner"></span> Loading Champions...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <h3 id="total-users">0</h3>
+            <p>Active Learners</p>
+          </div>
+          <div class="stat-item">
+            <h3 id="total-skills">0</h3>
+            <p>Skills Offered</p>
+          </div>
+          <div class="stat-item">
+            <h3 id="total-requests">0</h3>
+            <p>Mentorships Hosted</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer style="padding: 4rem 0; border-top: 1px solid var(--border-subtle); background: var(--bg-main);">
+    <div class="container text-center">
+      <a href="index.html" class="navbar-brand" style="justify-content: center; margin-bottom: 1rem;">SkillSwap</a>
+      <p class="text-muted">© 2026 SkillSwap Hackathon Project. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script src="js/main.js"></script>
+  <script>
+    const API_URL = '/api';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadStats();
+      await loadLeaderboard();
+      checkExistingUser();
+    });
+
+    async function loadLeaderboard() {
+      const container = document.getElementById('leaderboard-container');
+      try {
+        const response = await fetch(`${API_URL}/users/leaderboard`);
+        const result = await response.json();
+
+        if (result.success) {
+          if (result.data.length === 0) {
+            container.innerHTML = '<div style="padding: 3rem; text-align: center;" class="text-muted">No champions found yet. Be the first!</div>';
+            return;
+          }
+
+          container.innerHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 80px; text-align: center;">Rank</th>
+                  <th>Mentor</th>
+                  <th style="text-align: center;">Performance</th>
+                  <th style="text-align: right;">Experience Coins</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${result.data.map((user, index) => `
+                  <tr>
+                    <td style="text-align: center;">
+                      <span class="rank-badge">${index + 1}</span>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: var(--text-main);">${user.name}</div>
+                    </td>
+                    <td style="text-align: center;">
+                      <span style="color: #f59e0b; font-weight: 700;">★ ${user.averageRating ? user.averageRating.toFixed(1) : 'New'}</span>
+                    </td>
+                    <td style="text-align: right;">
+                      <span class="badge badge-primary" style="font-size: 0.9rem;">🪙 ${user.coins} Coins</span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        container.innerHTML = '<div style="padding: 3rem; text-align: center;" class="text-danger">Failed to sync leaderboard.</div>';
+      }
+    }
+
+    function checkExistingUser() {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        document.getElementById('user-setup').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        loadUserInfo(userId);
+      }
+    }
+
+    async function loadUserInfo(userId) {
+      try {
+        const response = await fetch(`${API_URL}/users/${userId}`);
+        const result = await response.json();
+        if (result.success) {
+          const user = result.data;
+          document.getElementById('user-name').textContent = user.name;
+          document.getElementById('user-email').textContent = user.email;
+          document.getElementById('user-coins').textContent = user.coins;
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const [usersRes, skillsRes] = await Promise.all([
+          fetch(`${API_URL}/users`),
+          fetch(`${API_URL}/skills/search?skillName=`)
+        ]);
+        const users = await usersRes.json();
+        const skills = await skillsRes.json();
+        if (users.success) document.getElementById('total-users').textContent = users.count || 0;
+        if (skills.success) document.getElementById('total-skills').textContent = skills.count || 0;
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const bio = document.getElementById('bio').value;
+
+      try {
+        const response = await fetch(`${API_URL}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, bio })
+        });
+        const result = await response.json();
+        if (result.success) {
+          localStorage.setItem('userId', result.data._id);
+          showAlert('Account created! Welcome to SkillSwap.', 'success');
+          document.getElementById('user-setup').style.display = 'none';
+          document.getElementById('user-info').style.display = 'block';
+          document.getElementById('user-name').textContent = result.data.name;
+          document.getElementById('user-email').textContent = result.data.email;
+          document.getElementById('user-coins').textContent = result.data.coins;
+          await loadStats();
+          await loadLeaderboard();
+        } else {
+          showAlert(result.message, 'danger');
+        }
+      } catch (error) {
+        console.error('Error creating user:', error);
+        showAlert('Setup failed. Please try again.', 'danger');
+      }
+    });
+  </script>
+</body>
+
+</html>

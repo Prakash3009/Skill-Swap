@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage your mentorship requests on SkillSwap">
+    <title>Requests - SkillSwap</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <span
+                    style="display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; background: var(--primary); color: white; border-radius: 0.5rem; font-size: 1.25rem;">✨</span>
+                SkillSwap
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="search.html" class="nav-link">Find Mentors</a></li>
+                <li><a href="community.html" class="nav-link">Communities</a></li>
+                <li><a href="redeem.html" class="nav-link">Redeem</a></li>
+                <li><a href="profile.html" class="nav-link">My Profile</a></li>
+                <li><a href="requests.html" class="nav-link active">My Requests</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div id="no-user" style="display: none;">
+            <div class="alert alert-info">
+                <strong>No account found!</strong> Please create an account on the <a href="index.html">home page</a>
+                first.
+            </div>
+        </div>
+
+        <div id="requests-content" style="display: none;">
+            <div class="d-flex justify-between align-center mb-3">
+                <h1>📬 My Requests</h1>
+                <button onclick="logout()" class="btn btn-secondary btn-sm"
+                    style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+
+            <!-- Incoming Requests (As Mentor) -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h2 class="card-title">📥 Incoming Requests (As Mentor)</h2>
+                    <p class="text-muted">Students who want to learn from you</p>
+                </div>
+                <div class="card-body">
+                    <div id="incoming-requests">
+                        <div class="loading-container">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outgoing Requests (As Learner) -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📤 Outgoing Requests (As Learner)</h2>
+                    <p class="text-muted">Mentors you've requested help from</p>
+                </div>
+                <div class="card-body">
+                    <div id="outgoing-requests">
+                        <div class="loading-container">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Modal -->
+        <div id="feedback-modal"
+            style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 2rem;">
+            <div class="card" style="max-width: 600px; margin: 2rem auto;">
+                <div class="card-header">
+                    <h2 class="card-title">⭐ Submit Feedback</h2>
+                </div>
+                <div class="card-body">
+                    <form id="feedback-form">
+                        <div class="form-group">
+                            <label class="form-label">Rating</label>
+                            <div class="d-flex gap-2" id="rating-stars">
+                                <span class="star" data-rating="1" style="font-size: 2rem; cursor: pointer;">⭐</span>
+                                <span class="star" data-rating="2" style="font-size: 2rem; cursor: pointer;">⭐</span>
+                                <span class="star" data-rating="3" style="font-size: 2rem; cursor: pointer;">⭐</span>
+                                <span class="star" data-rating="4" style="font-size: 2rem; cursor: pointer;">⭐</span>
+                                <span class="star" data-rating="5" style="font-size: 2rem; cursor: pointer;">⭐</span>
+                            </div>
+                            <input type="hidden" id="rating-value" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="feedback-comment" class="form-label">Comment (Optional)</label>
+                            <textarea id="feedback-comment" class="form-control"
+                                placeholder="Share your experience with this mentor..."></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="closeFeedbackModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script>
+        const API_URL = '/api';
+        let currentUserId = null;
+        let currentRequestId = null;
+        let currentMentorId = null;
+
+        // Check for user on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            currentUserId = localStorage.getItem('userId');
+
+            if (!currentUserId) {
+                document.getElementById('no-user').style.display = 'block';
+            } else {
+                document.getElementById('requests-content').style.display = 'block';
+                loadRequests();
+            }
+
+            // Setup star rating
+            setupStarRating();
+        });
+
+        // Load all requests
+        async function loadRequests() {
+            try {
+                const response = await fetch(`${API_URL}/requests/user/${currentUserId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayIncomingRequests(result.data.incoming);
+                    displayOutgoingRequests(result.data.outgoing);
+                }
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                showAlert('Failed to load requests', 'danger');
+            }
+        }
+
+        // Display incoming requests (As Mentor)
+        function displayIncomingRequests(requests) {
+            const container = document.getElementById('incoming-requests');
+
+            if (requests.length === 0) {
+                container.innerHTML = '<p class="text-muted">No incoming requests yet.</p>';
+                return;
+            }
+
+            container.innerHTML = requests.map(req => `
+        <div class="card mb-3" style="padding: 1.5rem;">
+          <div class="d-flex justify-between align-center mb-3">
+            <div>
+              <h3 style="margin: 0;">${req.learnerId.name}</h3>
+              <p class="text-muted" style="margin: 0;">${req.learnerId.email}</p>
+            </div>
+            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase()}</span>
+          </div>
+
+          <!-- Status Timeline -->
+          <div class="status-timeline mb-3">
+            <div class="step ${req.status === 'pending' || req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="line"></div>
+            <div class="step ${req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Accepted</div>
+            </div>
+            <div class="line"></div>
+            <div class="step ${req.status === 'completed' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Completed</div>
+            </div>
+          </div>
+          
+          <div class="card-tertiary mb-3" style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
+            <p style="margin: 0;"><strong>Skill:</strong> ${req.skillId.skillName}</p>
+            ${req.suggestedDate ? `<p style="margin: 0.5rem 0 0 0;"><strong>📅 Scheduled for:</strong> ${formatDate(req.suggestedDate)} at ${req.suggestedTime || 'Anytime'}</p>` : ''}
+            ${req.message ? `<p style="margin: 0.5rem 0 0 0;"><strong>💬 Message:</strong> ${req.message}</p>` : ''}
+          </div>
+
+          <!-- Session Notes Section -->
+          ${req.status === 'accepted' || req.status === 'completed' ? `
+            <div class="session-notes mt-3">
+                <label class="form-label">Session Notes & Resources</label>
+                ${req.status === 'accepted' ? `
+                    <textarea id="notes-${req._id}" class="form-control mb-2" placeholder="Add meeting links or learning resources...">${req.sessionNotes || ''}</textarea>
+                    <button class="btn btn-secondary btn-sm" onclick="saveNotes('${req._id}')">Save Notes</button>
+                ` : `
+                    <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; font-size: 0.9rem;">
+                        ${req.sessionNotes || 'No notes added'}
+                    </div>
+                `}
+            </div>
+          ` : ''}
+          
+          <div class="d-flex gap-2 mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+            ${req.status === 'pending'
+                    ? `<button class="btn btn-primary btn-sm" onclick="acceptRequest('${req._id}')">Accept Request</button>`
+                    : ''
+                }
+            ${req.status === 'accepted'
+                    ? `<button class="btn btn-success btn-sm" onclick="completeRequest('${req._id}')">Mark as Completed (+5 🪙)</button>`
+                    : ''
+                }
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // Display outgoing requests (As Learner)
+        function displayOutgoingRequests(requests) {
+            const container = document.getElementById('outgoing-requests');
+
+            if (requests.length === 0) {
+                container.innerHTML = '<p class="text-muted">No outgoing requests yet.</p>';
+                return;
+            }
+
+            container.innerHTML = requests.map(req => `
+        <div class="card mb-3" style="padding: 1.5rem;">
+          <div class="d-flex justify-between align-center mb-3">
+            <div>
+              <h3 style="margin: 0;">${req.mentorId.name}</h3>
+              <p class="text-muted" style="margin: 0;">${req.mentorId.email}</p>
+            </div>
+            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase()}</span>
+          </div>
+
+          <!-- Status Timeline -->
+          <div class="status-timeline mb-3">
+            <div class="step ${req.status === 'pending' || req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="line"></div>
+            <div class="step ${req.status === 'accepted' || req.status === 'completed' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Accepted</div>
+            </div>
+            <div class="line"></div>
+            <div class="step ${req.status === 'completed' ? 'active' : ''}">
+                <div class="dot"></div>
+                <div class="label">Completed</div>
+            </div>
+          </div>
+          
+          <div class="card-tertiary mb-3" style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
+            <p style="margin: 0;"><strong>Skill:</strong> ${req.skillId.skillName}</p>
+            ${req.suggestedDate ? `<p style="margin: 0.5rem 0 0 0;"><strong>📅 Your Proposal:</strong> ${formatDate(req.suggestedDate)} at ${req.suggestedTime || 'Anytime'}</p>` : ''}
+            ${req.message ? `<p style="margin: 0.5rem 0 0 0;"><strong>Your Message:</strong> ${req.message}</p>` : ''}
+          </div>
+
+          <!-- Session Notes Section -->
+          ${(req.status === 'accepted' || req.status === 'completed') && req.sessionNotes ? `
+            <div class="session-notes mt-3">
+                <label class="form-label">Mentor's Session Notes</label>
+                <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; font-size: 0.9rem;">
+                    ${req.sessionNotes}
+                </div>
+            </div>
+          ` : ''}
+          
+          <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
+            ${req.status === 'completed'
+                    ? `<button class="btn btn-primary btn-sm" onclick="openFeedbackModal('${req._id}', '${req.mentorId._id}')">⭐ Rate Mentorship</button>`
+                    : ''
+                }
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // Get status badge class
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'pending': return 'badge-warning';
+                case 'accepted': return 'badge-primary';
+                case 'completed': return 'badge-success';
+                default: return 'badge-secondary';
+            }
+        }
+
+        // Accept request
+        async function acceptRequest(requestId) {
+            try {
+                const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
+                    method: 'PUT'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Request accepted!', 'success');
+                    loadRequests();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error accepting request:', error);
+                showAlert('Failed to accept request', 'danger');
+            }
+        }
+
+        // Complete request
+        async function completeRequest(requestId) {
+            try {
+                const response = await fetch(`${API_URL}/requests/${requestId}/complete`, {
+                    method: 'PUT'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(`Mentorship completed! You earned 5 coins. Total: ${result.mentorCoins} 🪙`, 'success');
+                    loadRequests();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error completing request:', error);
+                showAlert('Failed to complete request', 'danger');
+            }
+        }
+
+        // Save session notes
+        async function saveNotes(requestId) {
+            const notes = document.getElementById(`notes-${requestId}`).value;
+            try {
+                const response = await fetch(`${API_URL}/requests/${requestId}/notes`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionNotes: notes })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Session notes saved successfully!', 'success');
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving notes:', error);
+                showAlert('Failed to save notes', 'danger');
+            }
+        }
+
+        // Setup star rating
+        function setupStarRating() {
+            const stars = document.querySelectorAll('.star');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const rating = star.getAttribute('data-rating');
+                    document.getElementById('rating-value').value = rating;
+
+                    // Update star display
+                    stars.forEach(s => {
+                        const sRating = s.getAttribute('data-rating');
+                        s.style.opacity = sRating <= rating ? '1' : '0.3';
+                    });
+                });
+            });
+        }
+
+        // Open feedback modal
+        function openFeedbackModal(requestId, mentorId) {
+            currentRequestId = requestId;
+            currentMentorId = mentorId;
+            document.getElementById('feedback-modal').style.display = 'block';
+
+            // Reset stars
+            document.querySelectorAll('.star').forEach(s => s.style.opacity = '1');
+            document.getElementById('rating-value').value = '';
+        }
+
+        // Close feedback modal
+        function closeFeedbackModal() {
+            document.getElementById('feedback-modal').style.display = 'none';
+            document.getElementById('feedback-comment').value = '';
+        }
+
+        // Submit feedback
+        document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const rating = document.getElementById('rating-value').value;
+            const comment = document.getElementById('feedback-comment').value;
+
+            if (!rating) {
+                showAlert('Please select a rating', 'danger');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        requestId: currentRequestId,
+                        learnerId: currentUserId,
+                        mentorId: currentMentorId,
+                        rating: parseInt(rating),
+                        comment
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Feedback submitted successfully!', 'success');
+                    closeFeedbackModal();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                showAlert('Failed to submit feedback', 'danger');
+            }
+        });
+    </script>
+</body>
+
+</html>

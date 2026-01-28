@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage your SkillSwap profile and skills">
+    <title>My Profile - SkillSwap</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <span
+                    style="display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; background: var(--primary); color: white; border-radius: 0.5rem; font-size: 1.25rem;">✨</span>
+                SkillSwap
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="search.html" class="nav-link">Find Mentors</a></li>
+                <li><a href="community.html" class="nav-link">Communities</a></li>
+                <li><a href="redeem.html" class="nav-link">Redeem</a></li>
+                <li><a href="profile.html" class="nav-link active">My Profile</a></li>
+                <li><a href="requests.html" class="nav-link">My Requests</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div id="no-user" style="display: none; padding: 4rem 0;">
+            <div class="card text-center">
+                <h2>No account found!</h2>
+                <p class="text-muted">Please create an account on the home page first.</p>
+                <a href="index.html" class="btn btn-primary mt-3">Go to Home</a>
+            </div>
+        </div>
+
+        <div id="profile-content" style="display: none; padding: 2rem 0;">
+            <!-- Profile Header -->
+            <div class="card mb-3">
+                <div class="d-flex justify-between align-center">
+                    <div>
+                        <h1 id="profile-name">Loading...</h1>
+                        <p id="profile-email" class="text-muted"></p>
+                        <p id="profile-rating" style="margin-top: 5px;"></p>
+                        <p id="profile-bio" class="mt-2"></p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 1rem; align-items: flex-end;">
+                        <div class="coin-badge">
+                            <span class="coin-icon">🪙</span>
+                            <span id="profile-coins">0</span> Coins
+                        </div>
+                        <button onclick="logout()" class="btn btn-secondary btn-sm">🚪 Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <!-- Add Offered Skill -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">➕ Add Skill You Offer</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="add-offered-skill-form">
+                            <div class="form-group">
+                                <label for="offered-skill-name" class="form-label">Skill Name</label>
+                                <input type="text" id="offered-skill-name" class="form-control"
+                                    placeholder="e.g., JavaScript" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="offered-skill-level" class="form-label">Level</label>
+                                <select id="offered-skill-level" class="form-control" required>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="offered-skill-category" class="form-label">Category</label>
+                                <select id="offered-skill-category" class="form-control" required>
+                                    <option value="Web">Web</option>
+                                    <option value="ML">ML</option>
+                                    <option value="Design">Design</option>
+                                    <option value="DSA">DSA</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Add Offered Skill</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Add Wanted Skill -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🎯 Add Skill You Want</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="add-wanted-skill-form">
+                            <div class="form-group">
+                                <label for="wanted-skill-name" class="form-label">Skill Name</label>
+                                <input type="text" id="wanted-skill-name" class="form-control"
+                                    placeholder="e.g., Python" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="wanted-skill-level" class="form-label">Desired Level</label>
+                                <select id="wanted-skill-level" class="form-control" required>
+                                    <option value="Beginner">Beginner</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="wanted-skill-category" class="form-label">Category</label>
+                                <select id="wanted-skill-category" class="form-control" required>
+                                    <option value="Web">Web</option>
+                                    <option value="ML">ML</option>
+                                    <option value="Design">Design</option>
+                                    <option value="DSA">DSA</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Add Wanted Skill</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Led Communities Section -->
+            <div class="card mb-3 mt-4">
+                <div class="card-header">
+                    <h2 class="card-title">🏘️ Communities I Lead</h2>
+                </div>
+                <div class="card-body">
+                    <div id="led-communities-list">
+                        <p class="text-muted">No communities created yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-2 mt-4">
+                <!-- Skills I Offer -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">💡 Skills I Offer</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="offered-skills-list">
+                            <p class="text-muted">No skills added yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills I Want to Learn -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📚 Skills I Want to Learn</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="wanted-skills-list">
+                            <p class="text-muted">No skills added yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script>
+        const API_URL = '/api';
+        let currentUserId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentUserId = localStorage.getItem('userId');
+            if (!currentUserId) {
+                document.getElementById('no-user').style.display = 'block';
+            } else {
+                document.getElementById('profile-content').style.display = 'block';
+                loadProfile();
+            }
+        });
+
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_URL}/users/${currentUserId}`);
+                const result = await response.json();
+                if (result.success) {
+                    const user = result.data;
+                    document.getElementById('profile-name').textContent = user.name;
+                    document.getElementById('profile-email').textContent = user.email;
+                    document.getElementById('profile-bio').textContent = user.bio || 'No bio provided';
+                    document.getElementById('profile-coins').textContent = user.coins;
+
+                    if (user.totalRatingsCount > 0) {
+                        document.getElementById('profile-rating').innerHTML = `<strong style="color: #f59e0b;">⭐ ${user.averageRating.toFixed(1)}</strong> (${user.totalRatingsCount} ratings)`;
+                    }
+
+                    displaySkills(user.skillsOffered, 'offered-skills-list', 'badge-warning');
+                    displaySkills(user.skillsWanted, 'wanted-skills-list', 'badge-secondary');
+                    loadLedCommunities();
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showAlert('Failed to load profile', 'danger');
+            }
+        }
+
+        async function loadLedCommunities() {
+            const list = document.getElementById('led-communities-list');
+            try {
+                const res = await fetch(`${API_URL}/communities?user=${currentUserId}`);
+                const result = await res.json();
+                if (result.success) {
+                    if (result.data.length === 0) {
+                        list.innerHTML = '<p class="text-muted">No communities created yet. Create one for 20 coins!</p>';
+                        return;
+                    }
+                    list.innerHTML = result.data.map(comm => `
+                        <div class="card mb-2" style="padding: 1rem; background: var(--bg-tertiary); cursor: pointer;" onclick="window.location.href='community.html'">
+                            <div class="d-flex justify-between align-center">
+                                <div>
+                                    <strong>${comm.name}</strong>
+                                    <div class="mt-1">
+                                        <span class="badge badge-primary">${comm.category}</span>
+                                        <span style="font-size: 0.8rem; margin-left: 10px;">👥 ${comm.members.length} members</span>
+                                    </div>
+                                </div>
+                                <span class="badge badge-warning">Owner</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Error loading led communities:', err);
+                list.innerHTML = '<p class="text-danger">Failed to load communities.</p>';
+            }
+        }
+
+        function displaySkills(skills, containerId, categoryClass) {
+            const container = document.getElementById(containerId);
+            if (!skills || skills.length === 0) {
+                container.innerHTML = '<p class="text-muted">No skills added yet.</p>';
+                return;
+            }
+            container.innerHTML = skills.map(skill => `
+                <div class="card mb-2" style="padding: 1rem; background: var(--bg-tertiary);">
+                    <div class="d-flex justify-between align-center">
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem;">${skill.skillName}</h4>
+                            <div class="d-flex gap-1">
+                                <span class="badge badge-primary">${skill.level}</span>
+                                <span class="badge ${categoryClass}">${skill.category}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('add-offered-skill-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const skillData = {
+                skillName: document.getElementById('offered-skill-name').value,
+                level: document.getElementById('offered-skill-level').value,
+                category: document.getElementById('offered-skill-category').value,
+                userId: currentUserId,
+                type: 'offered'
+            };
+            try {
+                const response = await fetch(`${API_URL}/skills`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(skillData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert('Skill added successfully!', 'success');
+                    e.target.reset();
+                    loadProfile();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error adding skill:', error);
+                showAlert('Failed to add skill', 'danger');
+            }
+        });
+
+        document.getElementById('add-wanted-skill-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const skillData = {
+                skillName: document.getElementById('wanted-skill-name').value,
+                level: document.getElementById('wanted-skill-level').value,
+                category: document.getElementById('wanted-skill-category').value,
+                userId: currentUserId,
+                type: 'wanted'
+            };
+            try {
+                const response = await fetch(`${API_URL}/skills`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(skillData)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert('Skill added successfully!', 'success');
+                    e.target.reset();
+                    loadProfile();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error adding skill:', error);
+                showAlert('Failed to add skill', 'danger');
+            }
+        });
+    </script>
+</body>
+
+</html>
