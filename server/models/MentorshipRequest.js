@@ -7,19 +7,17 @@ const mongoose = require('mongoose');
  */
 
 const mentorshipRequestSchema = new mongoose.Schema({
-    // User who is requesting mentorship (learner)
+    // ... existing fields ...
     learnerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    // User who will provide mentorship (mentor)
     mentorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    // Skill being requested
     skillId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Skill',
@@ -52,15 +50,26 @@ const mentorshipRequestSchema = new mongoose.Schema({
     quiz: {
         questions: [{
             text: { type: String, required: true },
-            options: [{ type: String, required: true }], // 4 options usually
-            correctAnswer: { type: Number, required: true } // Index 0-3
+            options: [{ type: String, required: true }],
+            correctAnswer: { type: Number, required: true }
         }],
         isEnabled: { type: Boolean, default: false }
     },
     quizScore: {
         type: Number,
-        default: null // null not taken, or 0-3
+        default: null
     }
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Virtual populate for feedback
+mentorshipRequestSchema.virtual('feedback', {
+    ref: 'Feedback',
+    localField: '_id',
+    foreignField: 'requestId',
+    justOne: true
 });
 
 module.exports = mongoose.model('MentorshipRequest', mentorshipRequestSchema);

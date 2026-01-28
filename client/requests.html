@@ -253,282 +253,100 @@
                 ${req.status === 'accepted' ? `
                     <textarea id="notes-${req._id}" class="form-control mb-2" placeholder="Add meeting links or learning resources...">${req.sessionNotes || ''}</textarea>
                     <button class="btn btn-secondary btn-sm" onclick="saveNotes('${req._id}')">Save Notes</button>
-                ` : `
-                    <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; font-size: 0.9rem;">
-                        ${req.sessionNotes || 'No notes added'}
-                    </div>
-                `}
-            </div>
-          ` : ''}
-          
-          <div class="d-flex gap-2 mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
-            ${req.status === 'pending'
-                            ? `<button class="btn btn-primary btn-sm" onclick="acceptRequest('${req._id}')">Accept Request</button>`
-                            : ''
-                        }
-            ${req.status === 'accepted'
-                            ? `<button class="btn btn-success btn-sm" onclick="completeRequest('${req._id}')">Mark as Completed (Wait for Feedback)</button>`
-                            : ''
-                        }
-            ${req.status === 'completed'
-                            ? `<span class="text-muted" style="font-size: 0.9rem;">Waiting for learner feedback to receive coins...</span>`
-                            : ''
-                        }
-             ${req.status === 'feedback_submitted'
-                            ? `<span class="text-success"><strong>✓ Feedback Received (+5 🪙)</strong></span>`
-                            : ''
-                        }
-          </div>
-        </div>
-      `).join('');
-                }
+                                    document.getElementById('rating-value').value = rating;
 
-                // Display outgoing requests (As Learner)
-                function displayOutgoingRequests(requests) {
-                    const container = document.getElementById('outgoing-requests');
-
-                    if (requests.length === 0) {
-                        container.innerHTML = '<p class="text-muted">No outgoing requests yet.</p>';
-                        return;
-                    }
-
-                    container.innerHTML = requests.map(req => `
-        <div class="card mb-3" style="padding: 1.5rem;">
-          <div class="d-flex justify-between align-center mb-3">
-            <div>
-              <h3 style="margin: 0;">${req.mentorId.name}</h3>
-              <p class="text-muted" style="margin: 0;">${req.mentorId.email}</p>
-            </div>
-            <span class="badge ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase().replace('_', ' ')}</span>
-          </div>
-
-          <!-- Status Timeline -->
-          <div class="status-timeline mb-3">
-            <div class="step ${req.status !== 'pending' ? 'active' : ''}">
-                <div class="dot"></div>
-                <div class="label">Accepted</div>
-            </div>
-            <div class="line"></div>
-            <div class="step ${req.status === 'completed' || req.status === 'feedback_submitted' ? 'active' : ''}">
-                <div class="dot"></div>
-                <div class="label">Completed</div>
-            </div>
-            <div class="line"></div>
-            <div class="step ${req.status === 'feedback_submitted' ? 'active' : ''}">
-                <div class="dot"></div>
-                <div class="label">Reviewed</div>
-            </div>
-          </div>
-          
-          <div class="card-tertiary mb-3" style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color);">
-            <p style="margin: 0;"><strong>Skill:</strong> ${req.skillId.skillName}</p>
-            ${req.suggestedDate ? `<p style="margin: 0.5rem 0 0 0;"><strong>📅 Your Proposal:</strong> ${formatDate(req.suggestedDate)} at ${req.suggestedTime || 'Anytime'}</p>` : ''}
-            ${req.message ? `<p style="margin: 0.5rem 0 0 0;"><strong>Your Message:</strong> ${req.message}</p>` : ''}
-          </div>
-
-          <!-- Session Notes Section -->
-          ${(req.status !== 'pending') && req.sessionNotes ? `
-            <div class="session-notes mt-3">
-                <label class="form-label">Mentor's Session Notes</label>
-                <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; font-size: 0.9rem;">
-                    ${req.sessionNotes}
-                </div>
-            </div>
-          ` : ''}
-
-          <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-color);">
-            ${req.status === 'completed'
-                            ? `<button class="btn btn-primary btn-sm w-100" onclick="openFeedbackModal('${req._id}', '${req.mentorId._id}')">⭐ Give Feedback (Required)</button>`
-                            : ''
-                        }
-            ${req.status === 'accepted'
-                            ? `<p class="text-muted text-center" style="font-size: 0.9rem;">Mentorship in progress... Wait for mentor to mark complete.</p>`
-                            : ''
-                        }
-            ${req.status === 'feedback_submitted'
-                            ? `<div class="text-center text-success"><strong>✓ Mentorship Finalized</strong></div>`
-                            : ''
-                        }
-          </div>
-        </div>
-      `).join('');
-                }
-
-                // Get status badge class
-                function getStatusBadgeClass(status) {
-                    switch (status) {
-                        case 'pending': return 'badge-warning';
-                        case 'accepted': return 'badge-primary';
-                        case 'completed': return 'badge-success';
-                        default: return 'badge-secondary';
-                    }
-                }
-
-                // Accept request
-                async function acceptRequest(requestId) {
-                    try {
-                        const response = await fetch(`${API_URL}/requests/${requestId}/accept`, {
-                            method: 'PUT'
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            showAlert('Request accepted!', 'success');
-                            loadRequests();
-                        } else {
-                            showAlert(result.message, 'danger');
-                        }
-                    } catch (error) {
-                        console.error('Error accepting request:', error);
-                        showAlert('Failed to accept request', 'danger');
-                    }
-                }
-
-                // Complete request
-                async function completeRequest(requestId) {
-                    try {
-                        const response = await fetch(`${API_URL}/requests/${requestId}/complete`, {
-                            method: 'PUT'
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            showAlert(`Mentorship completed! You earned 5 coins. Total: ${result.mentorCoins} 🪙`, 'success');
-                            loadRequests();
-                        } else {
-                            showAlert(result.message, 'danger');
-                        }
-                    } catch (error) {
-                        console.error('Error completing request:', error);
-                        showAlert('Failed to complete request', 'danger');
-                    }
-                }
-
-                // Save session notes
-                async function saveNotes(requestId) {
-                    const notes = document.getElementById(`notes-${requestId}`).value;
-                    try {
-                        const response = await fetch(`${API_URL}/requests/${requestId}/notes`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ sessionNotes: notes })
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            showAlert('Session notes saved successfully!', 'success');
-                        } else {
-                            showAlert(result.message, 'danger');
-                        }
-                    } catch (error) {
-                        console.error('Error saving notes:', error);
-                        showAlert('Failed to save notes', 'danger');
-                    }
-                }
-
-                // Setup star rating
-                function setupStarRating() {
-                    const stars = document.querySelectorAll('.star');
-                    stars.forEach(star => {
-                        star.addEventListener('click', () => {
-                            const rating = star.getAttribute('data-rating');
-                            document.getElementById('rating-value').value = rating;
-
-                            // Update star display
-                            stars.forEach(s => {
-                                const sRating = s.getAttribute('data-rating');
-                                s.style.opacity = sRating <= rating ? '1' : '0.3';
+                                    // Update star display
+                                    stars.forEach(s => {
+                                        const sRating = s.getAttribute('data-rating');
+                                        s.style.opacity = sRating <= rating ? '1' : '0.3';
+                                    });
+                                });
                             });
-                        });
-                    });
-                }
+                        }
 
                 // Open feedback modal
                 function openFeedbackModal(requestId, mentorId) {
-                    currentRequestId = requestId;
-                    currentMentorId = mentorId;
-                    const modal = document.getElementById('feedback-modal');
-                    if (modal) {
-                        modal.style.display = 'block';
-                        // Reset stars
-                        document.querySelectorAll('.star').forEach(s => s.style.opacity = '1');
-                        document.getElementById('rating-value').value = '';
-                        document.getElementById('feedback-comment').value = '';
-                    }
-                }
+                            currentRequestId = requestId;
+                            currentMentorId = mentorId;
+                            const modal = document.getElementById('feedback-modal');
+                            if (modal) {
+                                modal.style.display = 'block';
+                                // Reset stars
+                                document.querySelectorAll('.star').forEach(s => s.style.opacity = '1');
+                                document.getElementById('rating-value').value = '';
+                                document.getElementById('feedback-comment').value = '';
+                            }
+                        }
 
                 // Close feedback modal
                 function closeFeedbackModal() {
-                    document.getElementById('feedback-modal').style.display = 'none';
-                    document.getElementById('feedback-comment').value = '';
-                }
+                            document.getElementById('feedback-modal').style.display = 'none';
+                            document.getElementById('feedback-comment').value = '';
+                        }
 
                 // Submit feedback
                 document.getElementById('feedback-form').addEventListener('submit', async (e) => {
-                    e.preventDefault();
+                            e.preventDefault();
 
-                    const rating = document.getElementById('rating-value').value;
-                    const comment = document.getElementById('feedback-comment').value;
+                            const rating = document.getElementById('rating-value').value;
+                            const comment = document.getElementById('feedback-comment').value;
 
-                    if (!rating) {
-                        showAlert('Please select a rating', 'danger');
-                        return;
-                    }
+                            if (!rating) {
+                                showAlert('Please select a rating', 'danger');
+                                return;
+                            }
 
-                    try {
-                        const response = await fetch(`${API_URL}/feedback`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                requestId: currentRequestId,
-                                learnerId: currentUserId,
-                                mentorId: currentMentorId,
-                                rating: parseInt(rating),
-                                comment
-                            })
+                            try {
+                                const response = await fetch(`${ API_URL } / feedback`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        requestId: currentRequestId,
+                                        learnerId: currentUserId,
+                                        mentorId: currentMentorId,
+                                        rating: parseInt(rating),
+                                        comment
+                                    })
+                                });
+
+                                const result = await response.json();
+
+                                if (result.success) {
+                                    showAlert('Feedback submitted successfully!', 'success');
+                                    closeFeedbackModal();
+                                } else {
+                                    showAlert(result.message, 'danger');
+                                }
+                            } catch (error) {
+                                console.error('Error submitting feedback:', error);
+                                showAlert('Failed to submit feedback', 'danger');
+                            }
                         });
 
-                        const result = await response.json();
 
-                        if (result.success) {
-                            showAlert('Feedback submitted successfully!', 'success');
-                            closeFeedbackModal();
-                        } else {
-                            showAlert(result.message, 'danger');
-                        }
-                    } catch (error) {
-                        console.error('Error submitting feedback:', error);
-                        showAlert('Failed to submit feedback', 'danger');
+                    // --- QUIZ LOGIC ---
+
+                    function openCreateQuizModal(requestId) {
+                        currentRequestId = requestId;
+                        document.getElementById('create-quiz-modal').style.display = 'block';
+                        // Reset form
+                        document.getElementById('quiz-questions-container').innerHTML = '';
+                        addQuestionField(); // Add first question by default
                     }
-                });
 
+                    function closeCreateQuizModal() {
+                        document.getElementById('create-quiz-modal').style.display = 'none';
+                    }
 
-                // --- QUIZ LOGIC ---
+                    function addQuestionField() {
+                        const container = document.getElementById('quiz-questions-container');
+                        const qCount = container.children.length;
+                        if (qCount >= 3) return; // Max 3
 
-                function openCreateQuizModal(requestId) {
-                    currentRequestId = requestId;
-                    document.getElementById('create-quiz-modal').style.display = 'block';
-                    // Reset form
-                    document.getElementById('quiz-questions-container').innerHTML = '';
-                    addQuestionField(); // Add first question by default
-                }
-
-                function closeCreateQuizModal() {
-                    document.getElementById('create-quiz-modal').style.display = 'none';
-                }
-
-                function addQuestionField() {
-                    const container = document.getElementById('quiz-questions-container');
-                    const qCount = container.children.length;
-                    if (qCount >= 3) return; // Max 3
-
-                    const div = document.createElement('div');
-                    div.className = 'card mb-3 p-3';
-                    div.innerHTML = `
-                <div class="form-group">
+                        const div = document.createElement('div');
+                        div.className = 'card mb-3 p-3';
+                        div.innerHTML = `
+                    < div class= "form-group" >
                     <label class="form-label">Question ${qCount + 1}</label>
                     <input type="text" class="form-control question-text" required placeholder="Question text">
                 </div>
@@ -543,57 +361,57 @@
                     <input type="number" class="form-control correct-idx" required min="0" max="3">
                 </div>
             `;
-                    container.appendChild(div);
-                }
-
-                async function submitCreateQuiz(e) {
-                    e.preventDefault();
-                    const container = document.getElementById('quiz-questions-container');
-                    const questions = [];
-
-                    Array.from(container.children).forEach(card => {
-                        const text = card.querySelector('.question-text').value;
-                        const options = [
-                            card.querySelector('.option-0').value,
-                            card.querySelector('.option-1').value,
-                            card.querySelector('.option-2').value,
-                            card.querySelector('.option-3').value
-                        ];
-                        const correctAnswer = parseInt(card.querySelector('.correct-idx').value);
-                        questions.push({ text, options, correctAnswer });
-                    });
-
-                    try {
-                        const res = await authenticatedFetch(`${API_URL}/requests/${currentRequestId}/quiz`, {
-                            method: 'POST',
-                            body: JSON.stringify({ questions })
-                        });
-                        const result = await res.json();
-                        if (result.success) {
-                            showAlert('Quiz created successfully!', 'success');
-                            closeCreateQuizModal();
-                            loadRequests(); // Refresh UI
-                        } else {
-                            showAlert(result.message, 'danger');
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        showAlert('Failed to create quiz', 'danger');
+                        container.appendChild(div);
                     }
-                }
 
-                let currentQuizData = null;
+                    async function submitCreateQuiz(e) {
+                        e.preventDefault();
+                        const container = document.getElementById('quiz-questions-container');
+                        const questions = [];
 
-                function openTakeQuizModal(requestId, quizData) {
-                    currentRequestId = requestId;
-                    currentQuizData = quizData;
-                    const container = document.getElementById('take-quiz-questions');
-                    container.innerHTML = '';
+                        Array.from(container.children).forEach(card => {
+                            const text = card.querySelector('.question-text').value;
+                            const options = [
+                                card.querySelector('.option-0').value,
+                                card.querySelector('.option-1').value,
+                                card.querySelector('.option-2').value,
+                                card.querySelector('.option-3').value
+                            ];
+                            const correctAnswer = parseInt(card.querySelector('.correct-idx').value);
+                            questions.push({ text, options, correctAnswer });
+                        });
 
-                    quizData.questions.forEach((q, idx) => {
-                        const div = document.createElement('div');
-                        div.className = 'mb-4';
-                        div.innerHTML = `
+                        try {
+                            const res = await authenticatedFetch(`${API_URL}/requests/${currentRequestId}/quiz`, {
+                                method: 'POST',
+                                body: JSON.stringify({ questions })
+                            });
+                            const result = await res.json();
+                            if (result.success) {
+                                showAlert('Quiz created successfully!', 'success');
+                                closeCreateQuizModal();
+                                loadRequests(); // Refresh UI
+                            } else {
+                                showAlert(result.message, 'danger');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showAlert('Failed to create quiz', 'danger');
+                        }
+                    }
+
+                    let currentQuizData = null;
+
+                    function openTakeQuizModal(requestId, quizData) {
+                        currentRequestId = requestId;
+                        currentQuizData = quizData;
+                        const container = document.getElementById('take-quiz-questions');
+                        container.innerHTML = '';
+
+                        quizData.questions.forEach((q, idx) => {
+                            const div = document.createElement('div');
+                            div.className = 'mb-4';
+                            div.innerHTML = `
                     <p class="font-bold mb-2">${idx + 1}. ${q.text}</p>
                     <div class="d-flex flex-column gap-2">
                         ${q.options.map((opt, optIdx) => `
@@ -603,52 +421,52 @@
                         `).join('')}
                     </div>
                 `;
-                        container.appendChild(div);
-                    });
-
-                    document.getElementById('take-quiz-modal').style.display = 'block';
-                }
-
-                function closeTakeQuizModal() {
-                    document.getElementById('take-quiz-modal').style.display = 'none';
-                }
-
-                async function submitTakeQuiz() {
-                    const answers = [];
-                    const qCount = currentQuizData.questions.length;
-
-                    for (let i = 0; i < qCount; i++) {
-                        const selected = document.querySelector(`input[name="q${i}"]:checked`);
-                        if (!selected) {
-                            showAlert('Please answer all questions', 'warning');
-                            return;
-                        }
-                        answers.push(parseInt(selected.value));
-                    }
-
-                    try {
-                        const res = await authenticatedFetch(`${API_URL}/requests/${currentRequestId}/quiz/submit`, {
-                            method: 'POST',
-                            body: JSON.stringify({ answers })
+                            container.appendChild(div);
                         });
-                        const result = await res.json();
 
-                        if (result.success) {
-                            if (result.passed) {
-                                showAlert(result.message, 'success');
-                                closeTakeQuizModal();
-                                loadRequests();
-                            } else {
-                                showAlert(result.message, 'warning'); // Failed but retry allowed
-                            }
-                        } else {
-                            showAlert(result.message, 'danger');
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        showAlert('Failed to submit quiz', 'danger');
+                        document.getElementById('take-quiz-modal').style.display = 'block';
                     }
-                }
+
+                    function closeTakeQuizModal() {
+                        document.getElementById('take-quiz-modal').style.display = 'none';
+                    }
+
+                    async function submitTakeQuiz() {
+                        const answers = [];
+                        const qCount = currentQuizData.questions.length;
+
+                        for (let i = 0; i < qCount; i++) {
+                            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                            if (!selected) {
+                                showAlert('Please answer all questions', 'warning');
+                                return;
+                            }
+                            answers.push(parseInt(selected.value));
+                        }
+
+                        try {
+                            const res = await authenticatedFetch(`${API_URL}/requests/${currentRequestId}/quiz/submit`, {
+                                method: 'POST',
+                                body: JSON.stringify({ answers })
+                            });
+                            const result = await res.json();
+
+                            if (result.success) {
+                                if (result.passed) {
+                                    showAlert(result.message, 'success');
+                                    closeTakeQuizModal();
+                                    loadRequests();
+                                } else {
+                                    showAlert(result.message, 'warning'); // Failed but retry allowed
+                                }
+                            } else {
+                                showAlert(result.message, 'danger');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showAlert('Failed to submit quiz', 'danger');
+                        }
+                    }
             </script>
 
             <footer class="site-footer">

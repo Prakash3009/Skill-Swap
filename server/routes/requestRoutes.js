@@ -194,12 +194,14 @@ router.get('/user/:userId', async (req, res) => {
         const asLearner = await MentorshipRequest.find({ learnerId: userId })
             .populate('mentorId')
             .populate('skillId')
+            .populate('feedback')
             .sort({ createdAt: -1 });
 
         // Get requests where user is mentor
         const asMentor = await MentorshipRequest.find({ mentorId: userId })
             .populate('learnerId')
             .populate('skillId')
+            .populate('feedback')
             .sort({ createdAt: -1 });
 
         res.json({
