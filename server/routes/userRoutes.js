@@ -156,10 +156,10 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/leaderboard', async (req, res) => {
     try {
-        const topUsers = await User.find()
-            .sort({ coins: -1 })
-            .limit(10)
-            .select('name coins averageRating');
+        const topUsers = await User.find({ totalRatingsCount: { $gt: 0 } }) // Only rank rated users
+            .sort({ averageRating: -1, totalRatingsCount: -1 }) // Sort by Rating, then by Count
+            .limit(3)
+            .select('name email coins averageRating totalRatingsCount skillsOffered bio');
 
         res.json({
             success: true,
