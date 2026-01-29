@@ -20,9 +20,9 @@ app.use(cors()); // Enable CORS for frontend communication
 app.use(bodyParser.json()); // Parse JSON request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Route for root - Redirect to prototype home page
+// Route for root - Redirect to login page instead of the home page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/home.html'));
+    res.sendFile(path.join(__dirname, '../client/login.html'));
 });
 
 // Serve static files from client directory

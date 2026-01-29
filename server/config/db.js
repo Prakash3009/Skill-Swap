@@ -9,7 +9,11 @@ const connectDB = async () => {
     try {
         // MongoDB connection string - use environment variable if available
         const dbUrl = process.env.MONGO_URI || 'mongodb://localhost:27017/skillswap';
-        console.log(`📡 Connecting to: ${dbUrl.includes('mongodb+srv') ? 'Cloud MongoDB' : 'Local MongoDB'}`);
+
+        // Mask password for safe logging
+        const maskedUrl = dbUrl.replace(/\/\/([^:]+):([^@]+)@/, '// $1:****@');
+        console.log(`📡 Attempting to connect to: ${maskedUrl}`);
+
         const conn = await mongoose.connect(dbUrl, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
