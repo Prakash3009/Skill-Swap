@@ -7,8 +7,8 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        // MongoDB connection string - using local MongoDB instance
-        const conn = await mongoose.connect('mongodb://localhost:27017/skillswap', {
+        const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/skillswap';
+        const conn = await mongoose.connect(uri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
