@@ -60,6 +60,30 @@ router.post('/', async (req, res) => {
     }
 });
 
+// @route   GET /api/users/leaderboard
+// @desc    Get top users by coins
+// @access  Public
+router.get('/leaderboard', async (req, res) => {
+    try {
+        // Rank by Rating > Review Count > Coins
+        const topUsers = await User.find()
+            .sort({ averageRating: -1, totalRatingsCount: -1, coins: -1 })
+            .limit(3)
+            .select('name email coins averageRating totalRatingsCount skillsOffered bio');
+
+        res.json({
+            success: true,
+            data: topUsers
+        });
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
 // @route   GET /api/users/:id
 // @desc    Get user by ID with populated skills
 // @access  Public
@@ -151,27 +175,57 @@ router.get('/', async (req, res) => {
     }
 });
 
-// @route   GET /api/users/leaderboard
-// @desc    Get top users by coins
+
+
+const { calculateMentorScore } = require('../utils/recommendationEngine');
+
+// @route   GET /api/users/recommendations/:userId
+// @desc    Get smart mentor recommendations for a user
 // @access  Public
-router.get('/leaderboard', async (req, res) => {
+router.get('/recommendations/:userId', async (req, res) => {
     try {
-        // Rank by Rating > Review Count > Coins
-        const topUsers = await User.find()
-            .sort({ averageRating: -1, totalRatingsCount: -1, coins: -1 })
-            .limit(3)
-            .select('name email coins averageRating totalRatingsCount skillsOffered bio');
+        const targetUserId = req.params.userId;
+
+        // 1. Fetch target user with skills
+        const user = await User.findById(targetUserId)
+            .populate('skillsWanted');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // 2. Fetch potential mentors (all users except target)
+        // We select fields needed for scoring and display
+        const mentors = await User.find({ _id: { $ne: targetUserId } })
+            .populate('skillsOffered')
+            .select('name skillsOffered averageRating coins lastActiveAt bio');
+
+        // 3. Score mentors
+        const scoredMentors = mentors.map(mentor => {
+            const score = calculateMentorScore(user, mentor);
+            return {
+                _id: mentor._id,
+                name: mentor.name,
+                skills: mentor.skillsOffered.map(s => s.skillName),
+                avgRating: mentor.averageRating,
+                coins: mentor.coins,
+                recommendationScore: score,
+                bio: mentor.bio
+            };
+        });
+
+        // 4. Sort by score DESC and take top 5
+        const recommendations = scoredMentors
+            .sort((a, b) => b.recommendationScore - a.recommendationScore)
+            .slice(0, 5);
 
         res.json({
             success: true,
-            data: topUsers
+            data: recommendations
         });
     } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
+        console.error('Error getting recommendations:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 

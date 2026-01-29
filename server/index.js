@@ -19,6 +19,11 @@ app.use(cors()); // Enable CORS for frontend communication
 app.use(bodyParser.json()); // Parse JSON request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Route for root - Redirect to login page instead of the home page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/login.html'));
+});
+
 // Serve static files from client directory
 app.use(express.static(path.join(__dirname, '../client')));
 
@@ -31,6 +36,7 @@ app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/communities', require('./routes/communityRoutes'));
 app.use('/api/redeem', require('./routes/redeemRoutes'));
 app.use('/api/experiences', require('./routes/experienceRoutes'));
+app.use('/api/startups', require('./routes/startupRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -7,6 +7,7 @@
     <title>Mentor Profile | SkillSwap</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
 </head>
 
 <body>
@@ -85,6 +86,7 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script src="js/chatbot.js"></script>
     <script>
         const API_URL = '/api';
         const urlParams = new URLSearchParams(window.location.search);
@@ -200,7 +202,54 @@
                     <p class="text-muted mb-4">Request a mentorship session with ${user.name.split(' ')[0]} and start your masterclass today.</p>
                     <button class="btn btn-primary btn-lg" onclick="window.location.href='search.html?mentor=${user._id}'">Find in Search & Request</button>
                 </div>
+
+                <div class="mt-5">
+                    <h2 class="mb-4">📚 Mentorship History</h2>
+                    <div id="mentorship-history-timeline" class="d-flex flex-column gap-3">
+                        <div class="loading-container p-3 text-center">
+                            <span class="spinner"></span> Loading history...
+                        </div>
+                    </div>
+                </div>
             `;
+
+            // Load history after rendering the profile shell
+            loadMentorshipHistory();
+        }
+
+        async function loadMentorshipHistory() {
+            const container = document.getElementById('mentorship-history-timeline');
+            try {
+                const res = await fetch(`${API_URL}/requests/mentor/${mentorId}/history`);
+                const result = await res.json();
+
+                if (result.success) {
+                    const history = result.data;
+                    if (history.length === 0) {
+                        container.innerHTML = '<p class="text-muted">No completed mentorships yet. Be the first!</p>';
+                        return;
+                    }
+
+                    container.innerHTML = history.map(item => `
+                        <div class="card" style="border-left: 4px solid var(--success);">
+                            <div class="d-flex justify-between align-center">
+                                <div>
+                                    <h4 style="margin: 0; color: var(--primary);">${item.skillId ? item.skillId.skillName : 'Skill'}</h4>
+                                    <p class="text-muted" style="font-size: 0.85rem; margin-top: 5px;">
+                                        Mentored ${item.learnerId ? item.learnerId.name : 'a curious learner'}
+                                    </p>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.85rem;">
+                                    ${new Date(item.completedAt).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-danger">Failed to load history.</p>';
+            }
         }
 
         function formatLastActive(dateString) {

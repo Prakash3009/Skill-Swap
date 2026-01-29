@@ -21,7 +21,7 @@ const postSchema = new mongoose.Schema({
         default: Date.now
     }
 });
-
+ 
 const communitySchema = new mongoose.Schema({
     name: {
         type: String,
@@ -54,6 +54,11 @@ const communitySchema = new mongoose.Schema({
         ref: 'User'
     }],
     posts: [postSchema],
+    currentChallenge: {
+        title: { type: String, default: '' },
+        description: { type: String, default: '' },
+        createdAt: { type: Date, default: Date.now }
+    },
     createdAt: {
         type: Date,
         default: Date.now

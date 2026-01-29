@@ -4,20 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Share and discover real-world experiences">
+    <meta name="description" content="Share and learn from real-world experiences on SkillSwap">
     <title>Experiences - SkillSwap</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
+    <style>
+        .glow-effect {
+            box-shadow: 0 0 15px var(--primary);
+            transition: box-shadow 0.3s ease;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
@@ -35,18 +35,16 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="container" style="padding: 2rem 0;">
-        <div class="d-flex justify-between align-center mb-3">
-            <h1>💡 Real-World Experiences</h1>
-            <button onclick="logout()" class="btn btn-secondary btn-sm">🚪 Logout</button>
-        </div>
+    <main class="container" style="padding: 4rem 2rem;">
+        <header class="mb-5">
+            <h1>Real-World <span style="color: var(--primary);">Experiences</span></h1>
+            <p class="text-muted">Learn from the journeys of your peers.</p>
+        </header>
 
-        <!-- Share Experience Section -->
-        <div class="card mb-4">
+        <!-- Share Experience Form -->
+        <div class="card mb-5">
             <div class="card-header">
-                <h2 class="card-title">Share Your Experience</h2>
-                <p class="text-muted">Help others by sharing your real-world experiences</p>
+                <h3>Share Your Story</h3>
             </div>
             <div class="card-body">
                 <form id="share-experience-form">
@@ -71,6 +69,8 @@
                         <label for="exp-description" class="form-label">Description</label>
                         <textarea id="exp-description" class="form-control" rows="4"
                             placeholder="Share your experience in detail..." required></textarea>
+                        <small id="auto-detect-indicator" class="text-primary"
+                            style="display: none; margin-top: 0.25rem;">✨ Auto-detecting category...</small>
                     </div>
 
                     <div class="form-group">
@@ -119,6 +119,7 @@
 
     <!-- JavaScript -->
     <script src="js/main.js"></script>
+    <script src="js/chatbot.js"></script>
     <script>
         const API_URL = '/api';
         let currentUserId = null;
@@ -135,7 +136,48 @@
 
             // Filter change handler
             document.getElementById('filter-type').addEventListener('change', loadExperiences);
+
+            // Auto-classification logic
+            const descriptionField = document.getElementById('exp-description');
+            const typeSelect = document.getElementById('exp-type');
+            const indicator = document.getElementById('auto-detect-indicator');
+
+            descriptionField.addEventListener('blur', () => {
+                const text = descriptionField.value;
+                if (!text || text.length < 20) return;
+
+                indicator.style.display = 'block';
+
+                const detectedType = classifyText(text);
+
+                setTimeout(() => {
+                    if (detectedType !== 'Other') {
+                        const previousType = typeSelect.value;
+                        typeSelect.value = detectedType;
+
+                        if (previousType !== detectedType) {
+                            typeSelect.classList.add('glow-effect');
+                            setTimeout(() => typeSelect.classList.remove('glow-effect'), 2000);
+                        }
+                    }
+                    indicator.style.display = 'none';
+                }, 500);
+            });
         });
+
+        function classifyText(text) {
+            const content = text.toLowerCase();
+            const keywords = {
+                'Job Interview': ['interview', 'hr round', 'technical round', 'coding round', 'hiring', 'recruiter', 'job offer', 'salary discussion'],
+                'Hackathon': ['hackathon', '48 hours', '24 hours', 'devpost', 'team project', 'competition', 'prize', 'winner', 'building', 'project'],
+                'Internship': ['intern', 'stipend', 'company', 'corporate', 'onboarding', 'training', 'manager', 'full-time', 'placement']
+            };
+
+            for (const [category, words] of Object.entries(keywords)) {
+                if (words.some(word => content.includes(word))) return category;
+            }
+            return 'Other';
+        }
 
         // Share experience form
         document.getElementById('share-experience-form').addEventListener('submit', async (e) => {
@@ -202,26 +244,64 @@
                 return;
             }
 
-            container.innerHTML = experiences.map(exp => `
+            container.innerHTML = experiences.map(exp => {
+                const isLiked = exp.likes && exp.likes.includes(currentUserId);
+                const isDisliked = exp.dislikes && exp.dislikes.includes(currentUserId);
+
+                return `
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex justify-between align-center mb-2">
                             <h3 style="margin: 0;">${exp.title}</h3>
                             <span class="badge badge-primary">${exp.type}</span>
                         </div>
+                        <div class="d-flex align-center gap-2 mb-2">
+                            <span class="badge badge-success">👍 ${exp.likes ? exp.likes.length : 0} Likes</span>
+                            <span class="badge badge-danger">👎 ${exp.dislikes ? exp.dislikes.length : 0} Dislikes</span>
+                        </div>
                         <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">
                             By ${exp.createdBy.name} • ${timeAgo(exp.createdAt)}
                         </p>
                         <p style="line-height: 1.6; margin-bottom: 1rem;">${exp.description}</p>
                         ${exp.guidelines ? `
-                            <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--primary);">
+                            <div style="background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--primary); margin-bottom: 1rem;">
                                 <strong>💡 Tips & Guidelines:</strong>
                                 <p style="margin: 0.5rem 0 0 0; line-height: 1.6;">${exp.guidelines}</p>
                             </div>
                         ` : ''}
+                        
+                        <div class="mt-3 pt-3" style="border-top: 1px solid var(--border-subtle);">
+                            <div class="d-flex align-center gap-3">
+                                <button onclick="voteExperience('${exp._id}', 'like')" class="btn btn-sm ${isLiked ? 'btn-primary' : 'btn-secondary'}" style="padding: 0.4rem 1rem;">
+                                    👍 Helpful
+                                </button>
+                                <button onclick="voteExperience('${exp._id}', 'dislike')" class="btn btn-sm ${isDisliked ? 'btn-danger' : 'btn-secondary'}" style="padding: 0.4rem 1rem;">
+                                    👎 Not Useful
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        async function voteExperience(id, type) {
+            if (!currentUserId) return showAlert('Please login to vote', 'warning');
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/experiences/${id}/vote`, {
+                    method: 'POST',
+                    body: JSON.stringify({ type })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    loadExperiences();
+                }
+            } catch (error) {
+                showAlert('Failed to submit vote', 'danger');
+            }
         }
     </script>
 </body>

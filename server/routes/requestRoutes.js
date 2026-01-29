@@ -168,9 +168,44 @@ router.put('/:id/complete', async (req, res) => {
         request.completedAt = new Date();
         await request.save();
 
+        // Award 5 coins to mentor
+        const mentor = await User.findById(request.mentorId);
+        let mentorCoins = 0;
+        if (mentor) {
+            mentor.coins += 5;
+            await mentor.save();
+            mentorCoins = mentor.coins;
+
+            // Log mentor transaction
+            const mentorTransaction = new Transaction({
+                userId: request.mentorId,
+                type: 'earn',
+                amount: 5,
+                description: 'Mentorship Completed (Manual Completion - Mentor Reward)'
+            });
+            await mentorTransaction.save();
+        }
+
+        // Award 1 coin to learner
+        const learner = await User.findById(request.learnerId);
+        if (learner) {
+            learner.coins += 1;
+            await learner.save();
+
+            // Log learner transaction
+            const learnerTransaction = new Transaction({
+                userId: request.learnerId,
+                type: 'earn',
+                amount: 1,
+                description: 'Mentorship Completed (Manual Completion - Student Reward)'
+            });
+            await learnerTransaction.save();
+        }
+
         res.json({
             success: true,
-            message: 'Mentorship marked as completed. Waiting for learner feedback to release coins.',
+            message: 'Mentorship completed! You earned 5 coins and the student earned 1.',
+            mentorCoins: mentorCoins,
             data: request
         });
     } catch (error) {
@@ -528,10 +563,10 @@ router.post('/:id/quiz', async (req, res) => {
         const requestId = req.params.id;
 
         // Validate questions
-        if (!questions || !Array.isArray(questions) || questions.length < 3 || questions.length > 5) {
+        if (!questions || !Array.isArray(questions) || questions.length < 1 || questions.length > 5) {
             return res.status(400).json({
                 success: false,
-                message: 'Quiz must have 3-5 questions'
+                message: 'Quiz must have 1-5 questions'
             });
         }
 
@@ -682,20 +717,36 @@ router.post('/:id/quiz/submit', async (req, res) => {
             request.status = 'completed';
             request.completedAt = new Date();
 
-            // Award 5 coins to mentor
+            // 1. Award 5 coins to mentor
             const mentor = await User.findById(request.mentorId);
             if (mentor) {
                 mentor.coins += 5;
                 await mentor.save();
 
-                // Log transaction
-                const transaction = new Transaction({
+                // Log mentor transaction
+                const mentorTransaction = new Transaction({
                     userId: request.mentorId,
                     type: 'earn',
                     amount: 5,
-                    description: `Mentorship Completed (Quiz Passed: ${correctCount}/${totalQuestions})`
+                    description: `Mentorship Completed (Mentor Reward - Quiz Passed: ${correctCount}/${totalQuestions})`
                 });
-                await transaction.save();
+                await mentorTransaction.save();
+            }
+
+            // 2. Award 1 coin to learner (student)
+            const learner = await User.findById(request.learnerId);
+            if (learner) {
+                learner.coins += 1;
+                await learner.save();
+
+                // Log learner transaction
+                const learnerTransaction = new Transaction({
+                    userId: request.learnerId,
+                    type: 'earn',
+                    amount: 1,
+                    description: `Mentorship Completed (Student Reward - Quiz Passed: ${correctCount}/${totalQuestions})`
+                });
+                await learnerTransaction.save();
             }
         }
 
@@ -709,7 +760,7 @@ router.post('/:id/quiz/submit', async (req, res) => {
                 percentage: scorePercentage,
                 passed,
                 message: passed
-                    ? `Congratulations! You passed with ${scorePercentage.toFixed(0)}%`
+                    ? `Congratulations! You passed with ${scorePercentage.toFixed(0)}%! You've earned 1 Experience Coin, and your mentor received 5 coins.`
                     : `You scored ${scorePercentage.toFixed(0)}%. You need 80% to pass. Please try again.`
             }
         });
@@ -719,6 +770,56 @@ router.post('/:id/quiz/submit', async (req, res) => {
             success: false,
             message: 'Server error'
         });
+    }
+});
+
+// @route   GET /api/requests/mentor/:mentorId/history
+// @desc    Get completed mentorship history for a mentor
+// @access  Public
+router.get('/mentor/:mentorId/history', async (req, res) => {
+    try {
+        const history = await MentorshipRequest.find({
+            mentorId: req.params.mentorId,
+            status: 'completed'
+        })
+            .populate('learnerId', 'name')
+            .populate('skillId', 'skillName')
+            .sort({ completedAt: -1 });
+
+        res.json({
+            success: true,
+            data: history
+        });
+    } catch (error) {
+        console.error('Error fetching mentorship history:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// @route   GET /api/requests/skill-demand
+// @desc    Get skill demand based on mentorship requests
+// @access  Public
+router.get('/skill-demand', async (req, res) => {
+    try {
+        const demand = await MentorshipRequest.aggregate([
+            {
+                $group: {
+                    _id: '$skillId',
+                    requestCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { requestCount: -1 }
+            }
+        ]);
+
+        res.json({
+            success: true,
+            data: demand
+        });
+    } catch (error) {
+        console.error('Error fetching skill demand:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 

@@ -7,6 +7,7 @@
     <title>Skill Communities | SkillSwap</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
 </head>
 
 <body>
@@ -36,7 +37,7 @@
             <button class="btn btn-primary" onclick="toggleCreateForm()">+ Create Community (20 🪙)</button>
         </header>
 
-        <!-- Create Community Form (Hidden by default) -->
+        <!-- Create Community Form -->
         <section id="create-community-section" style="display: none; margin-bottom: 3rem;">
             <div class="card" style="max-width: 600px; margin: 0 auto; box-shadow: var(--shadow-xl);">
                 <div class="card-header">
@@ -81,48 +82,112 @@
             </div>
         </div>
 
-        <!-- Post View Modal (Hidden by default) -->
+        <!-- Community View Modal -->
         <div id="community-view"
-            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 2000; overflow-y: auto; padding: 2rem;">
-            <div class="card"
-                style="max-width: 900px; margin: 2rem auto; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative;">
-                <!-- Close Button (X) -->
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); z-index: 2000; overflow-y: auto;">
+            <div class="community-modal-container"
+                style="max-width: 1200px; margin: 2rem auto; min-height: 90vh; background: var(--bg-main); border-radius: var(--radius-xl); overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow-2xl);">
+
                 <button onclick="closeCommunityView()"
-                    style="position: absolute; top: 1.5rem; right: 1.5rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; border: none; background: var(--bg-tertiary); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; z-index: 10;">✕</button>
+                    style="position: absolute; top: 1.5rem; right: 1.5rem; width: 3rem; height: 3rem; border-radius: 50%; border: none; background: var(--bg-tertiary); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; z-index: 100;">✕</button>
 
-                <div class="card-header" style="border-bottom: 2px solid var(--border-subtle); padding: 2rem;">
-                    <div style="padding-right: 3rem;">
-                        <h2 id="view-comm-name" style="font-size: 2rem; margin-bottom: 0.5rem;"></h2>
-                        <span id="view-comm-category" class="badge badge-primary"></span>
-                    </div>
+                <div style="height: 120px; background: linear-gradient(90deg, var(--primary), var(--primary-dark));">
                 </div>
-                <div class="card-body" style="padding: 2rem;">
-                    <p id="view-comm-desc"
-                        style="font-size: 1.125rem; color: var(--text-body); background: var(--bg-subtle); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem; line-height: 1.7;">
-                    </p>
 
-                    <div id="join-section" class="mb-4"></div>
+                <div
+                    style="padding: 0 2.5rem; margin-top: -40px; margin-bottom: 2rem; display: flex; align-items: flex-end; justify-content: space-between;">
+                    <div style="display: flex; align-items: flex-end; gap: 1.5rem;">
+                        <div
+                            style="width: 100px; height: 100px; background: var(--bg-main); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 3rem; box-shadow: var(--shadow-lg); border: 4px solid var(--bg-main);">
+                            🏷️</div>
+                        <div style="padding-bottom: 0.5rem;">
+                            <h2 id="view-comm-name" style="font-size: 2.5rem; margin: 0;"></h2>
+                            <span id="view-comm-category" class="badge badge-primary" style="margin-top: 5px;"></span>
+                        </div>
+                    </div>
+                    <div id="join-section" style="padding-bottom: 0.5rem;"></div>
+                </div>
 
-                    <div id="post-section" style="display: none;">
-                        <div class="d-flex justify-between align-center mb-4">
-                            <h3 style="margin: 0;">Discussions</h3>
-                            <span id="post-count-badge" class="badge badge-secondary"></span>
+                <div
+                    style="display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; padding: 0 2.5rem 3rem; flex: 1;">
+
+                    <div class="community-main">
+                        <p id="view-comm-desc"
+                            style="font-size: 1.15rem; line-height: 1.8; color: var(--text-body); margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--border-subtle);">
+                        </p>
+
+                        <div id="post-section" style="display: none;">
+                            <div class="d-flex justify-between align-center mb-4">
+                                <h3 style="margin: 0;">Feed</h3>
+                                <span id="post-count-badge" class="badge badge-secondary"></span>
+                            </div>
+
+                            <form id="create-post-form" class="card mb-5"
+                                style="border: 1px solid var(--border-subtle); padding: 1.5rem; background: var(--bg-subtle);">
+                                <div class="form-group mb-3">
+                                    <textarea id="post-content" class="form-control" rows="3"
+                                        placeholder="Share something..." required></textarea>
+                                </div>
+                                <div class="d-flex justify-end">
+                                    <button type="submit" class="btn btn-primary">Post Update</button>
+                                </div>
+                            </form>
+
+                            <div id="posts-list" class="d-flex flex-column" style="gap: 1.5rem;"></div>
+                        </div>
+                    </div>
+
+                    <div class="community-sidebar">
+                        <div id="challenge-section" class="mb-4" style="display: none;">
+                            <div class="card"
+                                style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                                <div class="d-flex align-center gap-2 mb-3">
+                                    <span>🎯</span>
+                                    <h4 style="margin: 0; color: white;">Weekly Challenge</h4>
+                                </div>
+                                <h5 id="view-challenge-title"
+                                    style="color: var(--primary-light); margin-bottom: 0.5rem;"></h5>
+                                <p id="view-challenge-desc" style="font-size: 0.9rem; line-height: 1.5; opacity: 0.8;">
+                                </p>
+                            </div>
                         </div>
 
-                        <form id="create-post-form" class="card mb-5"
-                            style="background: var(--bg-subtle); padding: 1.5rem; border: 1px dashed var(--primary);">
-                            <div class="form-group">
-                                <label class="form-label">What's on your mind?</label>
-                                <textarea id="post-content" class="form-control" rows="3"
-                                    placeholder="Share knowledge, ask questions, or post resources..."
-                                    required></textarea>
+                        <div id="set-challenge-section" class="mb-4" style="display: none;">
+                            <div class="card"
+                                style="border: 1px dashed var(--warning); background: rgba(245, 158, 11, 0.05);">
+                                <h4 class="mb-3">⚙️ Admin Control</h4>
+                                <form id="set-challenge-form">
+                                    <div class="form-group mb-2">
+                                        <input type="text" id="challenge-title" class="form-control" placeholder="Title"
+                                            required>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <textarea id="challenge-desc" class="form-control" rows="2"
+                                            placeholder="Tasks..." required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning w-100 btn-sm">Update Challenge</button>
+                                </form>
                             </div>
-                            <div class="d-flex justify-end">
-                                <button type="submit" class="btn btn-primary">🚀 Share Post</button>
-                            </div>
-                        </form>
+                        </div>
 
-                        <div id="posts-list" class="d-flex flex-column" style="gap: 2rem;"></div>
+                        <div class="card mb-4">
+                            <h4 class="mb-3">Stats</h4>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex justify-between">
+                                    <span class="text-muted">Members</span>
+                                    <span id="view-comm-members-count" style="font-weight: 600;"></span>
+                                </div>
+                                <div class="d-flex justify-between">
+                                    <span class="text-muted">Created</span>
+                                    <span id="view-comm-date" style="font-size: 0.85rem;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h4 class="mb-3">Members</h4>
+                            <div id="view-comm-members" class="d-flex flex-wrap gap-2"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -130,6 +195,7 @@
     </main>
 
     <script src="js/main.js"></script>
+    <script src="js/chatbot.js"></script>
     <script>
         const API_URL = '/api';
         let currentUserId = localStorage.getItem('userId');
@@ -137,9 +203,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCommunities();
-            if (!currentUserId) {
-                showAlert('Please login to create or join communities', 'info');
-            }
         });
 
         function toggleCreateForm() {
@@ -154,32 +217,27 @@
                 const result = await res.json();
                 if (result.success) {
                     if (result.data.length === 0) {
-                        list.innerHTML = '<p class="text-muted">No communities yet. Be the first to create one!</p>';
+                        list.innerHTML = '<p class="text-muted">No communities yet.</p>';
                         return;
                     }
                     list.innerHTML = result.data.map(comm => `
                         <div class="card feature-card" onclick="viewCommunity('${comm._id}')" style="cursor: pointer;">
-                            <div class="badge badge-primary mb-2" style="display: inline-block;">${comm.category}</div>
+                            <div class="badge badge-primary mb-2">${comm.category}</div>
                             <h3>${comm.name}</h3>
-                            <p class="text-muted" style="font-size: 0.9rem;">${comm.description.substring(0, 100)}${comm.description.length > 100 ? '...' : ''}</p>
-                            <div class="mt-3 d-flex justify-between align-center">
-                                <span style="font-size: 0.8rem; font-weight: 600;">👥 ${comm.members.length} members</span>
+                            <p class="text-muted">${comm.description.substring(0, 80)}...</p>
+                            <div class="mt-3">
+                                <span>👥 ${comm.members.length} members</span>
                             </div>
                         </div>
                     `).join('');
                 }
             } catch (err) {
-                console.error(err);
-                list.innerHTML = '<p class="text-danger">Failed to load communities.</p>';
+                list.innerHTML = '<p class="text-danger">Failed to load.</p>';
             }
         }
 
         async function viewCommunity(id) {
             selectedCommId = id;
-            const view = document.getElementById('community-view');
-            const postSection = document.getElementById('post-section');
-            const joinSection = document.getElementById('join-section');
-
             try {
                 const res = await fetch(`${API_URL}/communities/${id}`);
                 const result = await res.json();
@@ -188,30 +246,50 @@
                     document.getElementById('view-comm-name').textContent = comm.name;
                     document.getElementById('view-comm-category').textContent = comm.category;
                     document.getElementById('view-comm-desc').textContent = comm.description;
+                    document.getElementById('view-comm-date').textContent = new Date(comm.createdAt).toLocaleDateString();
+                    document.getElementById('view-comm-members-count').textContent = comm.members.length;
 
                     const isMember = currentUserId && comm.members.some(m => m._id === currentUserId);
+                    const isCreator = currentUserId && comm.createdBy._id === currentUserId;
+
+                    document.getElementById('challenge-section').style.display = (comm.currentChallenge && comm.currentChallenge.title) ? 'block' : 'none';
+                    if (comm.currentChallenge) {
+                        document.getElementById('view-challenge-title').textContent = comm.currentChallenge.title;
+                        document.getElementById('view-challenge-desc').textContent = comm.currentChallenge.description;
+                    }
+
+                    document.getElementById('set-challenge-section').style.display = isCreator ? 'block' : 'none';
+
+                    const joinSection = document.getElementById('join-section');
+                    const postSection = document.getElementById('post-section');
 
                     if (isMember) {
-                        joinSection.innerHTML = '<span class="badge badge-primary">✓ You are a member</span>';
+                        joinSection.innerHTML = '<span class="badge badge-success">✓ Member</span>';
                         postSection.style.display = 'block';
                         displayPosts(comm.posts);
                     } else if (currentUserId) {
-                        joinSection.innerHTML = `<button class="btn btn-primary" onclick="joinCommunity('${comm._id}')">Join Community</button>`;
+                        joinSection.innerHTML = `<button class="btn btn-primary" onclick="joinCommunity('${comm._id}')">Join</button>`;
                         postSection.style.display = 'none';
                     } else {
-                        joinSection.innerHTML = '<p class="text-muted">Login to join and see posts.</p>';
+                        joinSection.innerHTML = '<span>Login to join</span>';
                         postSection.style.display = 'none';
                     }
 
-                    view.style.display = 'block';
+                    document.getElementById('view-comm-members').innerHTML = comm.members.map(m => `
+                        <div class="badge badge-secondary" title="${m.name}">${m.name.substring(0, 10)}</div>
+                    `).join('');
+
+                    document.getElementById('community-view').style.display = 'block';
+                    document.body.style.overflow = 'hidden';
                 }
             } catch (err) {
-                showAlert('Failed to load community details', 'danger');
+                showAlert('Error loading details', 'danger');
             }
         }
 
         function closeCommunityView() {
             document.getElementById('community-view').style.display = 'none';
+            document.body.style.overflow = '';
         }
 
         function displayPosts(posts) {
@@ -219,30 +297,26 @@
             document.getElementById('post-count-badge').textContent = `${posts.length} Posts`;
 
             if (posts.length === 0) {
-                list.innerHTML = '<div class="text-center p-5 text-muted">No posts yet. Start the conversation!</div>';
+                list.innerHTML = '<div class="text-center p-4 text-muted">No posts yet.</div>';
                 return;
             }
             list.innerHTML = posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(post => `
-                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-subtle);">
-                    <div style="background: var(--bg-tertiary); padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">${post.author.name}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${timeAgo(post.createdAt)}</div>
+                <div class="card" style="padding: 0; border: 1px solid var(--border-subtle);">
+                    <div style="background: var(--bg-tertiary); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between;">
+                        <div style="font-weight: 700;">${post.author.name}</div>
+                        <div class="text-muted" style="font-size: 0.8rem;">${timeAgo(post.createdAt)}</div>
                     </div>
-                    <div style="padding: 1.75rem; font-size: 1.1rem; line-height: 1.6; color: var(--text-main);">
-                        ${post.content}
-                    </div>
-                    
-                    <div style="padding: 0 1.75rem 1.75rem;">
-                        <div id="comments-${post._id}" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                    <div style="padding: 1.5rem;">${post.content}</div>
+                    <div style="padding: 0 1.5rem 1.5rem;">
+                        <div id="comments-${post._id}">
                             ${(post.comments || []).map(c => `
-                                <div style="font-size: 0.9rem; background: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-md); border-left: 3px solid var(--border-subtle);">
-                                    <div style="font-weight: 700; margin-bottom: 0.25rem;">${c.author.name}</div>
-                                    <div style="color: var(--text-body);">${c.content}</div>
+                                <div style="font-size: 0.85rem; background: var(--bg-subtle); padding: 0.5rem 1rem; border-radius: 8px; margin-top: 5px;">
+                                    <strong>${c.author.name}:</strong> ${c.content}
                                 </div>
                             `).join('')}
                         </div>
-                        <div class="d-flex gap-2 mt-4 pt-4" style="border-top: 1px solid var(--border-subtle);">
-                            <input type="text" class="form-control" id="input-${post._id}" placeholder="Write a supportive reply..." style="font-size: 0.9rem;">
+                        <div class="d-flex gap-2 mt-3">
+                            <input type="text" class="form-control form-control-sm" id="input-${post._id}" placeholder="Reply...">
                             <button class="btn btn-primary btn-sm" onclick="addComment('${post._id}')">Reply</button>
                         </div>
                     </div>
@@ -254,46 +328,29 @@
             const input = document.getElementById(`input-${postId}`);
             const content = input.value;
             if (!content) return;
-
             try {
                 const res = await fetch(`${API_URL}/communities/${selectedCommId}/posts/${postId}/comments`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: JSON.stringify({ content })
                 });
-                const result = await res.json();
-                if (result.success) {
-                    input.value = '';
+                if ((await res.json()).success) {
                     viewCommunity(selectedCommId);
-                } else {
-                    showAlert(result.message, 'danger');
                 }
-            } catch (err) {
-                showAlert('Failed to add comment', 'danger');
-            }
+            } catch (err) { }
         }
 
         async function joinCommunity(id) {
-            if (!currentUserId) return;
             try {
                 const res = await fetch(`${API_URL}/communities/${id}/join`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
-                const result = await res.json();
-                if (result.success) {
-                    showAlert('Joined successfully!', 'success');
+                if ((await res.json()).success) {
                     viewCommunity(id);
                     loadCommunities();
-                } else {
-                    showAlert(result.message, 'danger');
                 }
-            } catch (err) {
-                showAlert('Failed to join community', 'danger');
-            }
+            } catch (err) { }
         }
 
         document.getElementById('create-community-form').addEventListener('submit', async (e) => {
@@ -306,30 +363,17 @@
             try {
                 const res = await fetch(`${API_URL}/communities`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: JSON.stringify(data)
                 });
-
-                if (res.status === 404) {
-                    return showAlert('Backend route not found. Please restart the server!', 'danger');
-                }
-
                 const result = await res.json();
                 if (result.success) {
-                    showAlert('Community created successfully!', 'success');
                     toggleCreateForm();
-                    e.target.reset();
                     loadCommunities();
                 } else {
-                    showAlert(result.message || 'Failed to create community', 'danger');
+                    showAlert(result.message, 'danger');
                 }
-            } catch (err) {
-                console.error('Create community error:', err);
-                showAlert('Network error or server is offline', 'danger');
-            }
+            } catch (err) { }
         });
 
         document.getElementById('create-post-form').addEventListener('submit', async (e) => {
@@ -338,70 +382,32 @@
             try {
                 const res = await fetch(`${API_URL}/communities/${selectedCommId}/posts`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: JSON.stringify({ content })
                 });
-                const result = await res.json();
-                if (result.success) {
+                if ((await res.json()).success) {
                     e.target.reset();
                     viewCommunity(selectedCommId);
-                } else {
-                    showAlert(result.message, 'danger');
                 }
-            } catch (err) {
-                showAlert('Failed to create post', 'danger');
-            }
+            } catch (err) { }
+        });
+
+        document.getElementById('set-challenge-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('challenge-title').value;
+            const description = document.getElementById('challenge-desc').value;
+            try {
+                const res = await fetch(`${API_URL}/communities/${selectedCommId}/challenge`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: JSON.stringify({ title, description })
+                });
+                if ((await res.json()).success) {
+                    viewCommunity(selectedCommId);
+                }
+            } catch (err) { }
         });
     </script>
-
-    <footer class="site-footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-about">
-                    <a href="index.html" class="navbar-brand">
-                        <img src="img/logo.png" alt="SkillSwap" class="brand-logo">
-                    </a>
-                    <p>Fostering collaborative learning through specialized skill communities. Grow your network while
-                        you grow your skills.</p>
-                </div>
-                <div>
-                    <h4 class="footer-heading">Communities</h4>
-                    <ul class="footer-links">
-                        <li><a href="#" class="footer-link">Web Development</a></li>
-                        <li><a href="#" class="footer-link">Machine Learning</a></li>
-                        <li><a href="#" class="footer-link">DSA Mastery</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="footer-heading">Quick Access</h4>
-                    <ul class="footer-links">
-                        <li><a href="search.html" class="footer-link">Mentors</a></li>
-                        <li><a href="redeem.html" class="footer-link">Rewards</a></li>
-                        <li><a href="profile.html" class="footer-link">Profile</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="footer-heading">Creator</h4>
-                    <div class="footer-social">
-                        <a href="https://linkedin.com/in/abhilash-tech" target="_blank" class="social-icon"
-                            title="LinkedIn">in</a>
-                        <a href="https://github.com/Abhilash-18-tech" target="_blank" class="social-icon"
-                            title="GitHub">gh</a>
-                    </div>
-                    <p class="mt-3 text-muted" style="font-size: 0.8rem;">Designed for the Hackathon Spirit.</p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2026 SkillSwap Team.</p>
-                <div class="d-flex gap-2">
-                    <span>Alpha v1.0</span>
-                </div>
-            </div>
-        </div>
-    </footer>
 </body>
 
 </html>

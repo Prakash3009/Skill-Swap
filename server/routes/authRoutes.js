@@ -52,17 +52,16 @@ router.post('/register', async (req, res) => {
         }
 
         // Hash password using bcryptjs
-        // Salt rounds: 10 (good balance between security and performance)
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create new user with hashed password
+        // Create new user
         const user = new User({
             name,
             email: email.toLowerCase(),
             password: hashedPassword,
             bio: bio || '',
-            coins: 10 // Default starting coins
+            coins: 10
         });
 
         await user.save();
@@ -71,10 +70,9 @@ router.post('/register', async (req, res) => {
         const token = jwt.sign(
             { userId: user._id },
             JWT_SECRET,
-            { expiresIn: '7d' } // Token expires in 7 days
+            { expiresIn: '7d' }
         );
 
-        // Return success response (don't send password)
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
@@ -103,7 +101,6 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validate required fields
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -111,9 +108,7 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Find user by email (include password field)
-        const user = await User.findOne({ email: email.toLowerCase() })
-            .select('+password'); // Explicitly include password field
+        const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
         if (!user) {
             return res.status(401).json({
@@ -122,7 +117,6 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Compare password using bcryptjs
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
@@ -132,14 +126,16 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
             { userId: user._id },
             JWT_SECRET,
-            { expiresIn: '7d' } // Token expires in 7 days
+            { expiresIn: '7d' }
         );
 
-        // Return success response with token
+        // Update last activity
+        user.lastActiveAt = new Date();
+        await user.save();
+
         res.json({
             success: true,
             message: 'Login successful',
@@ -161,14 +157,10 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// @route   GET /api/auth/me
-// @desc    Get current user info (protected route example)
-// @access  Private
 const { authMiddleware } = require('../middleware/auth');
 
 router.get('/me', authMiddleware, async (req, res) => {
     try {
-        // req.userId is set by authMiddleware
         const user = await User.findById(req.userId)
             .populate('skillsOffered')
             .populate('skillsWanted');

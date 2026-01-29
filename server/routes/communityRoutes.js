@@ -198,4 +198,35 @@ router.post('/:id/posts/:postId/comments', authMiddleware, async (req, res) => {
     }
 });
 
+// @route   POST /api/communities/:id/challenge
+// @desc    Set today's challenge for the community (Creator only)
+// @access  Private
+router.post('/:id/challenge', authMiddleware, async (req, res) => {
+    try {
+        const { title, description } = req.body;
+        if (!title || !description) return res.status(400).json({ success: false, message: 'Title and description are required' });
+
+        const community = await Community.findById(req.params.id);
+        if (!community) return res.status(404).json({ success: false, message: 'Community not found' });
+
+        // Check if user is the creator
+        if (community.createdBy.toString() !== req.userId) {
+            return res.status(403).json({ success: false, message: 'Only the community creator can set challenges' });
+        }
+
+        community.currentChallenge = {
+            title,
+            description,
+            createdAt: new Date()
+        };
+
+        await community.save();
+
+        res.json({ success: true, message: 'Community challenge updated!', data: community.currentChallenge });
+    } catch (error) {
+        console.error('Error setting challenge:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

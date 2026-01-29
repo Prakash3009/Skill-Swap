@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Support and explore student-led startups in the SkillSwap community">
+    <title>Student Startups - SkillSwap</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
+    <style>
+        .startup-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--bg-main);
+            padding: 2.5rem;
+            border-radius: var(--radius-xl);
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .stars-input {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .stars-input span.active {
+            color: #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <img src="img/logo.png" alt="SkillSwap" class="brand-logo">
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="search.html" class="nav-link">Find Mentors</a></li>
+                <li><a href="community.html" class="nav-link">Communities</a></li>
+                <li><a href="experiences.html" class="nav-link">Experiences</a></li>
+                <li><a href="redeem.html" class="nav-link">Redeem</a></li>
+                <li><a href="profile.html" class="nav-link">My Profile</a></li>
+                <li><a href="requests.html" class="nav-link">My Requests</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container" style="padding: 3rem 0;">
+        <div class="d-flex justify-between align-center mb-5">
+            <div>
+                <h1>🚀 Student Startups</h1>
+                <p class="text-muted">Innovation lives here. Explore and sponsor student-led ventures.</p>
+            </div>
+            <button id="main-create-btn" onclick="showCreateForm()" class="btn btn-primary">Share Your Startup</button>
+        </div>
+
+        <!-- Create Startup Form (Hidden by default) -->
+        <div id="create-startup-container" class="card mb-5" style="display: none;">
+            <div class="card-header">
+                <h2>Register Your Startup</h2>
+                <p class="text-muted">Fill in the details to showcase your idea to the community.</p>
+            </div>
+            <div class="card-body">
+                <form id="create-startup-form">
+                    <div class="form-group">
+                        <label for="startup-name" class="form-label">Startup Name</label>
+                        <input type="text" id="startup-name" class="form-control" placeholder="e.g., EduAI" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="startup-idea" class="form-label">The Idea/Problem</label>
+                        <textarea id="startup-idea" class="form-control" rows="3"
+                            placeholder="What problem are you solving?" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="startup-implementation" class="form-label">Implementation Details</label>
+                        <textarea id="startup-implementation" class="form-control" rows="5"
+                            placeholder="How does it work? Tech stack, current progress..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="startup-github" class="form-label">GitHub Repository (Optional)</label>
+                        <input type="url" id="startup-github" class="form-control"
+                            placeholder="https://github.com/your-username/repo">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Launch Startup</button>
+                        <button type="button" onclick="hideCreateForm()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="startups-list-container" class="grid grid-3">
+            <!-- Startup cards -->
+            <div class="loading-container" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
+                <span class="spinner"></span> Gathering innovators...
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="startup-modal">
+        <div class="modal-content">
+            <button onclick="closeModal()" class="close-modal">✕</button>
+            <div id="modal-body">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>© 2026 SkillSwap Hackathon Project.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/chatbot.js"></script>
+    <script>
+        const API_URL = '/api';
+        let currentUserId = localStorage.getItem('userId');
+        let allStartups = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllStartups();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'create') {
+                showCreateForm();
+            }
+            if (urlParams.get('id')) {
+                setTimeout(() => openStartupDetail(urlParams.get('id')), 500);
+            }
+        });
+
+        async function loadAllStartups() {
+            const container = document.getElementById('startups-list-container');
+            try {
+                const response = await fetch(`${API_URL}/startups`);
+                const result = await response.json();
+
+                if (result.success) {
+                    allStartups = result.data;
+                    displayStartups(allStartups);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="text-danger">Failed to load startups.</p>';
+            }
+        }
+
+        function displayStartups(startups) {
+            const container = document.getElementById('startups-list-container');
+            if (startups.length === 0) {
+                container.innerHTML = '<p class="text-muted" style="grid-column:1/-1; text-align:center;">No startups found.</p>';
+                return;
+            }
+
+            container.innerHTML = startups.map(s => `
+                <div class="card mentor-card" onclick="openStartupDetail('${s._id}')">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <span class="badge badge-primary">Startup</span>
+                        <div style="color: #f59e0b; font-weight: 700;">⭐ ${s.averageRating.toFixed(1)}</div>
+                    </div>
+                    <h3 class="mb-2">${s.name}</h3>
+                    <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1.5rem; height: 3.2rem; overflow: hidden;">${s.ideaOrProblem}</p>
+                    <div class="d-flex justify-between align-center mt-auto">
+                        <div class="text-muted" style="font-size: 0.8rem;">By ${s.createdBy?.name || 'Unknown'}</div>
+                        <div class="badge badge-success">🪙 ${s.totalSponsoredCoins}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showCreateForm() {
+            if (!currentUserId) {
+                showAlert('Please login to share your startup', 'warning');
+                return;
+            }
+            document.getElementById('create-startup-container').style.display = 'block';
+            document.getElementById('main-create-btn').style.display = 'none';
+            document.getElementById('create-startup-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideCreateForm() {
+            document.getElementById('create-startup-container').style.display = 'none';
+            document.getElementById('main-create-btn').style.display = 'block';
+        }
+
+        document.getElementById('create-startup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('startup-name').value,
+                ideaOrProblem: document.getElementById('startup-idea').value,
+                implementation: document.getElementById('startup-implementation').value,
+                githubLink: document.getElementById('startup-github').value
+            };
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/startups`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Startup launched! Check it out in the list.', 'success');
+                    e.target.reset();
+                    hideCreateForm();
+                    loadAllStartups();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('Failed to register startup', 'danger');
+            }
+        });
+
+        function openStartupDetail(id) {
+            const startup = allStartups.find(s => s._id === id);
+            if (!startup) return;
+
+            const modal = document.getElementById('detail-modal');
+            const body = document.getElementById('modal-body');
+
+            body.innerHTML = `
+                <h1 class="mb-2">${startup.name}</h1>
+                <p class="text-muted mb-4">Proposed by ${startup.createdBy?.name || 'Anonymous'}</p>
+                
+                <div class="grid grid-2 mb-4" style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); text-align: center;">
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">⭐ ${startup.averageRating.toFixed(1)}</div>
+                        <div class="text-muted">Community Rating</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">🪙 ${startup.totalSponsoredCoins}</div>
+                        <div class="text-muted">Coins Sponsored</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="mb-2">The Mission</h3>
+                    <p style="line-height: 1.6;">${startup.ideaOrProblem}</p>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="mb-2">Implementation</h3>
+                    <p style="line-height: 1.6; white-space: pre-wrap;">${startup.implementation}</p>
+                </div>
+
+                ${startup.githubLink ? `
+                    <div class="mb-4">
+                        <a href="${startup.githubLink}" target="_blank" class="btn btn-secondary w-100">📂 View on GitHub</a>
+                    </div>
+                ` : ''}
+
+                <div class="card" style="border: 2px solid var(--primary-light); background: var(--bg-subtle);">
+                    <h3>Support this Idea</h3>
+                    <p class="text-muted mb-3">Sponsor coins to help this startup grow.</p>
+                    <div class="d-flex gap-2">
+                        <input type="number" id="sponsor-amount" class="form-control" placeholder="Amount" min="1" value="5">
+                        <button onclick="sponsorStartup('${startup._id}')" class="btn btn-primary">Sponsor</button>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h3>Rate Innovation</h3>
+                    <div class="stars-input" id="stars-container">
+                        <span onclick="setRating(1)">★</span>
+                        <span onclick="setRating(2)">★</span>
+                        <span onclick="setRating(3)">★</span>
+                        <span onclick="setRating(4)">★</span>
+                        <span onclick="setRating(5)">★</span>
+                    </div>
+                    <button onclick="submitRating('${startup._id}')" class="btn btn-sm btn-secondary mt-2">Submit Rating</button>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').style.display = 'none';
+        }
+
+        let selectedRating = 0;
+        function setRating(val) {
+            selectedRating = val;
+            const stars = document.querySelectorAll('#stars-container span');
+            stars.forEach((s, i) => {
+                if (i < val) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+        }
+
+        async function sponsorStartup(id) {
+            const amount = document.getElementById('sponsor-amount').value;
+            if (!currentUserId) return showAlert('Please login to sponsor', 'warning');
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/startups/${id}/sponsor`, {
+                    method: 'POST',
+                    body: JSON.stringify({ amount })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    loadAllStartups();
+                    closeModal();
+                } else {
+                    showAlert(result.message, 'danger');
+                }
+            } catch (error) {
+                showAlert('Transaction failed', 'danger');
+            }
+        }
+
+        async function submitRating(id) {
+            if (selectedRating === 0) return showAlert('Please select stars', 'warning');
+            if (!currentUserId) return showAlert('Please login to rate', 'warning');
+
+            try {
+                const response = await authenticatedFetch(`${API_URL}/startups/${id}/rate`, {
+                    method: 'POST',
+                    body: JSON.stringify({ stars: selectedRating })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert('Thanks for your feedback!', 'success');
+                    loadAllStartups();
+                    closeModal();
+                }
+            } catch (error) {
+                showAlert('Failed to submit rating', 'danger');
+            }
+        }
+    </script>
+</body>
+
+</html>

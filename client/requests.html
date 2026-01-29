@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
 </head>
 
 <body>
@@ -130,7 +130,8 @@
                             style="border:none;background:none;font-size:1.5rem;cursor:pointer;">✕</button>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-3">Create up to 3 multiple-choice questions for verification.</p>
+                        <p class="text-muted mb-3">Create up to 5 multiple-choice questions for verification (Minimum
+                            1).</p>
                         <form onsubmit="submitCreateQuiz(event)">
                             <div id="quiz-questions-container">
                                 <!-- Questions added here via JS -->
@@ -138,6 +139,8 @@
                             <div class="d-flex gap-2 mt-3">
                                 <button type="button" class="btn btn-secondary" onclick="addQuestionField()">+ Add
                                     Question</button>
+                                <button type="button" class="btn btn-info" onclick="generateSampleQuiz()">✨ Quick
+                                    Generate</button>
                                 <button type="submit" class="btn btn-primary">Save & Assign Quiz</button>
                             </div>
                         </form>
@@ -153,7 +156,8 @@
                         <h2 class="card-title">🎓 Final Quiz</h2>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-3">Pass this quiz to complete your mentorship (Score 2/3 or better).</p>
+                        <p id="quiz-description" class="text-muted mb-3">Pass this quiz to complete your mentorship
+                            (Score 80% or better).</p>
                         <div id="take-quiz-questions">
                             <!-- Questions rendered here -->
                         </div>
@@ -167,6 +171,7 @@
 
             <!-- JavaScript -->
             <script src="js/main.js"></script>
+            <script src="js/chatbot.js"></script>
             <script>
                 const API_URL = '/api';
                 let currentUserId = null;
@@ -268,14 +273,17 @@
                             : ''
                         }
             ${req.status === 'accepted'
-                            ? `${!req.quiz || !req.quiz.isEnabled
+                            ? `<div class="d-flex flex-wrap gap-2">
+                        ${!req.quiz || !req.quiz.isEnabled
                                 ? `<button class="btn btn-primary btn-sm" onclick="openCreateQuizModal('${req._id}')">📝 Create Quiz</button>`
                                 : `<span class="badge badge-success">✓ Quiz Assigned</span>`}
-                       <a href="messages.html?id=${req._id}" class="btn btn-secondary btn-sm">💬 Message</a>`
+                        <button class="btn btn-success btn-sm" onclick="completeRequest('${req._id}')">✅ Mark as Completed</button>
+                        <a href="messages.html?id=${req._id}" class="btn btn-secondary btn-sm">💬 Message</a>
+                       </div>`
                             : ''
                         }
             ${req.status === 'completed'
-                            ? `<span class="text-muted" style="font-size: 0.9rem;">Waiting for learner feedback to receive coins...</span>`
+                            ? `<div class="text-success" style="font-size: 0.9rem;"><strong>🏆 Mentorship Completed!</strong> You've received 5 coins. Waiting for learner feedback.</div>`
                             : ''
                         }
              ${req.status === 'feedback_submitted'
@@ -347,11 +355,9 @@
                         }
             ${req.status === 'accepted'
                             ? `<div class="d-flex gap-2">
-                         ${req.quiz && req.quiz.isEnabled && (req.quizScore === null || req.quizScore === undefined)
+                         ${req.quiz && req.quiz.isEnabled
                                 ? `<button class="btn btn-primary btn-sm" onclick="openTakeQuizModal('${req._id}')">🎓 Take Quiz</button>`
-                                : req.quizScore !== null && req.quizScore !== undefined
-                                    ? `<span class="badge badge-info">Quiz Score: ${req.quizScore}/${req.quiz?.questions?.length || 0}</span>`
-                                    : `<p class="text-muted text-center" style="font-size: 0.9rem; flex: 1;">Waiting for mentor to create quiz...</p>`}
+                                : `<p class="text-muted text-center" style="font-size: 0.9rem; flex: 1;">Waiting for mentor to create quiz...</p>`}
                          <a href="messages.html?id=${req._id}" class="btn btn-secondary btn-sm">💬 Message</a>
                        </div>`
                             : ''
@@ -534,7 +540,7 @@
                 function addQuestionField() {
                     const container = document.getElementById('quiz-questions-container');
                     const qCount = container.children.length;
-                    if (qCount >= 3) return; // Max 3
+                    if (qCount >= 5) return; // Max 5
 
                     const div = document.createElement('div');
                     div.className = 'card mb-3 p-3';
@@ -555,6 +561,28 @@
                 </div>
             `;
                     container.appendChild(div);
+                }
+
+                function generateSampleQuiz() {
+                    const container = document.getElementById('quiz-questions-container');
+                    container.innerHTML = '';
+
+                    const samples = [
+                        { q: "What is the primary purpose of this skill?", opts: ["Practical application", "Theoretical knowledge only", "Entertainment", "No specific purpose"], correct: 0 },
+                        { q: "Which tool is commonly used in this field?", opts: ["VS Code", "Excel", "Photoshop", "Depends on sub-task"], correct: 3 },
+                        { q: "What is a key best practice here?", opts: ["Consistent learning", "Working alone", "Ignoring errors", "Using old versions"], correct: 0 }
+                    ];
+
+                    samples.forEach((sample, i) => {
+                        addQuestionField();
+                        const card = container.children[i];
+                        card.querySelector('.question-text').value = sample.q;
+                        card.querySelector('.option-0').value = sample.opts[0];
+                        card.querySelector('.option-1').value = sample.opts[1];
+                        card.querySelector('.option-2').value = sample.opts[2];
+                        card.querySelector('.option-3').value = sample.opts[3];
+                        card.querySelector('.correct-idx').value = sample.correct;
+                    });
                 }
 
                 async function submitCreateQuiz(e) {
@@ -610,6 +638,11 @@
 
                         const quizData = result.data;
                         currentQuizData = quizData;
+
+                        // Update description
+                        const passCount = Math.ceil(quizData.totalQuestions * 0.8);
+                        document.getElementById('quiz-description').textContent = `Pass this quiz to complete your mentorship (Score ${passCount}/${quizData.totalQuestions} or better).`;
+
                         const container = document.getElementById('take-quiz-questions');
                         container.innerHTML = '';
 
